@@ -33,7 +33,7 @@ class CustomUser(AbstractUser):
         # validators=(validate_username, UnicodeUsernameValidator()),
     )
     email = models.EmailField(
-        "Почта",
+        "Электронная почта",
         max_length=MAX_LEN_EMAIL,
         unique=True,
         error_messages={
