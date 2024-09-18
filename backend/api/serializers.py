@@ -2,12 +2,14 @@ from rest_framework import serializers
 
 from users.models import CustomUser
 
-class UserSerializer(serializers.ModelSerializer):
+
+class CustomUserSerializer(serializers.ModelSerializer):
     """Serializer for CustomUserViewSet."""
 
     class Meta:
         model = CustomUser
         fields = (
+            "id",
             "username",
             "email",
             "first_name",
