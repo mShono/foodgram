@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Tag
+from .models import Tag, Ingredient
 from users.models import CustomUser
 
 
@@ -30,3 +30,15 @@ class TagSerializer(serializers.ModelSerializer):
             "slug",
         )
         # extra_kwargs = {"url": {"lookup_field": "slug"}}
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+    """Serializer for IngredientViewSet."""
+
+    class Meta:
+        model = Ingredient
+        fields = (
+            "id",
+            "name",
+            "measurement_unit",
+        )
