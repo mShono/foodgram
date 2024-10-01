@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from .models import Tag
 from users.models import CustomUser
 
 
@@ -16,3 +17,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "last_name",
             "avatar",
         )
+
+
+class TagSerializer(serializers.ModelSerializer):
+    """Serializer for TagViewSet."""
+
+    class Meta:
+        model = Tag
+        fields = (
+            "id",
+            "name",
+            "slug",
+        )
+        # extra_kwargs = {"url": {"lookup_field": "slug"}}
