@@ -4,11 +4,12 @@ from django.shortcuts import render
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.decorators import action
+from rest_framework.permissions import SAFE_METHODS
 from .filters import IngredientFilter
 from .models import Tag, Ingredient, Recipe, RecipeIngredient
 from .serializers import (
     CustomUserSerializer, TagSerializer, IngredientSerializer,
-    RecipeSerializer, RecipeIngredientSerializer,
+    RecipeReadSerializer, RecipeWriteSerializer, RecipeIngredientSerializer,
 )
 from users.models import CustomUser
 
@@ -53,10 +54,15 @@ class RecipeViewSet(ModelViewSet):
     """Viewset for Ingredient model."""
 
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    serializer_class = RecipeReadSerializer, RecipeWriteSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('author', 'tags',)
     # filterset_fields = ('is_favorited', 'is_in_shopping_cart',)
+
+    def get_serializer_class(self):
+        if self.request.method in SAFE_METHODS:
+            return RecipeReadSerializer
+        return RecipeWriteSerializer
 
 
 class RecipeIngredientViewSet(ModelViewSet):
