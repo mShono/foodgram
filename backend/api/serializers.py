@@ -1,3 +1,6 @@
+import base64
+import uuid
+from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from rest_framework.relations import PrimaryKeyRelatedField
@@ -50,7 +53,13 @@ class IngredientSerializer(serializers.ModelSerializer):
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     """Serializer for RecipeIngredientViewSet."""
 
-    ingredients = serializers.StringRelatedField()
+    # ingredients = serializers.StringRelatedField() # - не поддерживает операцию записи
+    id = serializers.IntegerField()
+    ingredients = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all(),
+        source='ingredient'
+    )
+    # ingredients = IngredientSerializer()
     measurement_unit = serializers.SerializerMethodField()
 
     class Meta:
@@ -64,6 +73,15 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     def get_measurement_unit(self, obj):
         return obj.ingredients.measurement_unit
+
+    def get_fields(self):
+        fields = super().get_fields()
+        request = self.context.get('request', None)
+
+        if request and request.method in ['POST', 'PUT', 'PATCH']:
+            fields.pop('ingredients')
+
+        return fields
 
 
 class TagFieldRepresentation(serializers.PrimaryKeyRelatedField):
@@ -119,3 +137,30 @@ class RecipeSerializer(serializers.ModelSerializer):
             # "is_favorited",
             # "is_in_shopping_cart",
         )
+
+    def to_internal_value(self, data):
+        image_data = data.get('image', None)
+        if image_data and isinstance(image_data, str) and image_data.startswith('data:image'):
+            format, imgstr = image_data.split(';base64,')
+            ext = format.split('/')[-1]
+            file_name = f'{uuid.uuid4()}.{ext}'
+            data['image'] = ContentFile(base64.b64decode(imgstr), name=file_name)
+        return super().to_internal_value(data)
+
+    def create(self, validated_data):
+        print(f'validated_data = {validated_data}')
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('recipe_ingredient')
+        author = self.context['request'].user
+        recipe = Recipe.objects.create(author=author, **validated_data)
+        recipe.tags.set(tags)
+        print(f'ingredients = {ingredients}')
+        for ingredient_data in ingredients:
+            ingredient_id = ingredient_data['id']
+            print(f'ingredient_id = {ingredient_id}')
+            amount = ingredient_data['amount']
+            print(f'amount = {amount}')
+            RecipeIngredient.objects.create(
+                ingredients_id=ingredient_id, recipe=recipe, amount=amount
+            )
+        return recipe
