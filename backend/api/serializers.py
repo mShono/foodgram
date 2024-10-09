@@ -74,25 +74,15 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     def get_name(self, obj):
         return obj.ingredients.name
 
-
-class TagFieldRepresentation(serializers.PrimaryKeyRelatedField):
-    """Displaying Tag's related fields as a dictionary."""
-
-    def to_representation(self, value):
-        tag = Tag.objects.get(pk=value.pk)
-        return {"id": tag.pk, "name": tag.name, "slug": tag.slug}
-
-
-class AuthorFieldRepresentation(serializers.PrimaryKeyRelatedField):
-    """Displaying Tag's related fields as a dictionary."""
-
-    def to_representation(self, value):
-        tag = Tag.objects.get(pk=value.pk)
-        return {"id": tag.pk, "name": tag.name, "slug": tag.slug}
+    # def validate_id(self, value):
+    #     print(f'value_id = {value}')
+    #     if not Ingredient.objects.filter(id=value).exists():
+    #         raise serializers.ValidationError(f"The 'ingredient' {value} do not exists")
+    #     return value
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
-    """Serializer for RecipeViewSet."""
+    """Writing serializer for RecipeViewSet."""
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()
@@ -121,6 +111,37 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             file_name = f'{uuid.uuid4()}.{ext}'
             data['image'] = ContentFile(base64.b64decode(imgstr), name=file_name)
         return super().to_internal_value(data)
+
+    def validate_ingredients(self, value):
+        if not value:
+            raise serializers.ValidationError("The 'ingredient' field list shouldn't be empty")
+        ingredients = []
+        for ingredient in value:
+
+            if not Ingredient.objects.filter(id=ingredient['id']).exists():
+                raise serializers.ValidationError(f"The 'ingredient' {ingredient['id']} do not exists")
+
+            if ingredient['amount'] <= 0:
+                raise serializers.ValidationError("The 'amount' field should be  positive integer")
+
+            if ingredient['id'] not in ingredients:
+                ingredients.append(ingredient['id'])
+            else:
+                raise serializers.ValidationError("The 'ingredient' {ingredient['id']} is repeated")
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError("The 'tags' field list shouldn't be empty")
+        if len(value) > len(set(value)):
+            raise serializers.ValidationError("The 'tags' field contains duplicate tags")
+        return value
+
+    def validate_cooking_time(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("The 'cooking_time' field should be a positive integer")
+        return value
+
 
     def create(self, validated_data):
         print(f'validated_data = {validated_data}')
@@ -165,7 +186,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
-    """Serializer for RecipeViewSet."""
+    """Reading serializer for RecipeViewSet."""
     tags = TagSerializer(many=True)
     author = CustomUserSerializer(
         read_only=True,
