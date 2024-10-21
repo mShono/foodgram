@@ -9,15 +9,33 @@ from .models import Tag, Ingredient, Recipe, RecipeIngredient
 from users.models import CustomUser
 
 
-# class AddAvatarSerializer(serializers.Serializer):
-#     """Сериализатор для регистрации."""
+class Base64ImageField(serializers.ImageField):
+    """Custom field to handle image encoding to Base64."""
 
-#     username = serializers.CharField(
-#         required=True,
-#         max_length=MAX_LEN_USER_INFO,
-#         validators=(validate_username, UnicodeUsernameValidator()),
-#     )
-#     email = serializers.EmailField(required=True, max_length=MAX_LEN_EMAIL)
+    def to_representation(self, value):
+        if value:
+            with open(value.path, "rb") as image_file:
+                string = base64.b64encode(image_file.read()).decode('utf-8')
+                return f'data:image/png;base64,{string}'
+        return None
+
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            file_name = f'{uuid.uuid4()}.{ext}'
+            data = ContentFile(base64.b64decode(imgstr), name=file_name)
+        return super().to_internal_value(data)
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    """Serializer for uploading avatar."""
+
+    avatar = Base64ImageField()
+
+    class Meta:
+        model = CustomUser
+        fields = ("avatar",)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -92,17 +110,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     #     return value
 
 
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            file_name = f'{uuid.uuid4()}.{ext}'
-            data = ContentFile(base64.b64decode(imgstr), name=file_name)
-            # data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
-
-
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Writing serializer for RecipeViewSet."""
     tags = serializers.PrimaryKeyRelatedField(
@@ -164,7 +171,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("The 'cooking_time' field should be a positive integer")
         return value
-
 
     def create(self, validated_data):
         print(f'validated_data = {validated_data}')

@@ -1,22 +1,38 @@
 from djoser import views as djoser_views
+from djoser import permissions as djoser_permissions
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import render
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.decorators import action
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.response import Response
 from .filters import IngredientFilter
 from .models import Tag, Ingredient, Recipe, RecipeIngredient
 from .serializers import (
-    CustomUserSerializer, TagSerializer, IngredientSerializer,
+    UserSerializer, TagSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, RecipeIngredientSerializer,
+    AvatarSerializer,
 )
 from users.models import CustomUser
 
 
 class CustomUserViewSet(djoser_views.UserViewSet):
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
+    serializer_class = UserSerializer
+
+    @action(["put"], detail=False, url_path='me/avatar', url_name='upload-avatar')
+    @permission_classes([IsAuthenticated])
+    def upload_avatar(self, request):
+        user = request.user
+        if user.is_anonymous:
+            return Response({"detail": "Authentication credentials were not provided."},
+                            status=status.HTTP_401_UNAUTHORIZED)
+        serializer = AvatarSerializer(data=request.data, instance=user)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # @action(
     #     # methods=["get", "patch"],
@@ -24,7 +40,7 @@ class CustomUserViewSet(djoser_views.UserViewSet):
     #     url_path="me/avatar",
     #     # url_name="users_detail",
     #     # permission_classes=(permissions.IsAuthenticated,),
-    #     # serializer_class=CustomUserSerializer,
+    #     # serializer_class=UserSerializer,
     #     # subscribe
     # )
 
