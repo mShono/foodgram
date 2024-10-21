@@ -21,18 +21,24 @@ class CustomUserViewSet(djoser_views.UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
 
-    @action(["put"], detail=False, url_path='me/avatar', url_name='upload-avatar')
+    @action(["put", "delete"], detail=False, url_path='me/avatar', url_name='upload-avatar')
     @permission_classes([IsAuthenticated])
-    def upload_avatar(self, request):
+    def manage_avatar(self, request):
         user = request.user
         if user.is_anonymous:
             return Response({"detail": "Authentication credentials were not provided."},
                             status=status.HTTP_401_UNAUTHORIZED)
-        serializer = AvatarSerializer(data=request.data, instance=user)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'PUT':
+            serializer = AvatarSerializer(data=request.data, instance=user)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'DELETE':
+            user.avatar.delete()
+            user.save()
+            return Response({"detail": "Аватар успешно удалён."}, status=status.HTTP_204_NO_CONTENT)
+
 
     # @action(
     #     # methods=["get", "patch"],
