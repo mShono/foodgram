@@ -14,16 +14,19 @@ class IngredientAdmin(admin.ModelAdmin):
     list_display = ("pk", "name", "measurement_unit")
     search_fields = ("name",)
     empty_value_display = "-пусто-"
+    # "pk" из list_display убрать
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
-        "pk", "author", "name", "text", "cooking_time"
+        "pk", "author", "name",
     )
     search_fields = ("name", "author",)
     list_filter = ("tags",)
     empty_value_display = "-пусто-"
+    # на странице рецепта вывести общее число добавлений этого рецепта в избранное.
+    # "pk" из list_display убрать
 
 
 @admin.register(RecipeIngredient)

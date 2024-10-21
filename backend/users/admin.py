@@ -14,5 +14,5 @@ class CustomUserAdmin(UserAdmin):
     )
     list_filter = ("username",)
     search_fields = (
-        "username",
+        "username", "email"
     )

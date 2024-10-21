@@ -9,7 +9,18 @@ from .models import Tag, Ingredient, Recipe, RecipeIngredient
 from users.models import CustomUser
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+# class AddAvatarSerializer(serializers.Serializer):
+#     """Сериализатор для регистрации."""
+
+#     username = serializers.CharField(
+#         required=True,
+#         max_length=MAX_LEN_USER_INFO,
+#         validators=(validate_username, UnicodeUsernameValidator()),
+#     )
+#     email = serializers.EmailField(required=True, max_length=MAX_LEN_EMAIL)
+
+
+class UserSerializer(serializers.ModelSerializer):
     """Serializer for CustomUserViewSet."""
 
     class Meta:
@@ -81,6 +92,17 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     #     return value
 
 
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            file_name = f'{uuid.uuid4()}.{ext}'
+            data = ContentFile(base64.b64decode(imgstr), name=file_name)
+            # data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+        return super().to_internal_value(data)
+
+
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Writing serializer for RecipeViewSet."""
     tags = serializers.PrimaryKeyRelatedField(
@@ -91,6 +113,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         child=serializers.DictField(child=serializers.IntegerField()),
         write_only=True
     )
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -103,14 +126,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "cooking_time",
         )
 
-    def to_internal_value(self, data):
-        image_data = data.get('image', None)
-        if image_data and isinstance(image_data, str) and image_data.startswith('data:image'):
-            format, imgstr = image_data.split(';base64,')
-            ext = format.split('/')[-1]
-            file_name = f'{uuid.uuid4()}.{ext}'
-            data['image'] = ContentFile(base64.b64decode(imgstr), name=file_name)
-        return super().to_internal_value(data)
+    # def to_internal_value(self, data):
+    #     image_data = data.get('image', None)
+    #     if image_data and isinstance(image_data, str) and image_data.startswith('data:image'):
+    #         format, imgstr = image_data.split(';base64,')
+    #         ext = format.split('/')[-1]
+    #         file_name = f'{uuid.uuid4()}.{ext}'
+    #         data['image'] = ContentFile(base64.b64decode(imgstr), name=file_name)
+    #     return super().to_internal_value(data)
 
     def validate_ingredients(self, value):
         if not value:
@@ -188,7 +211,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 class RecipeReadSerializer(serializers.ModelSerializer):
     """Reading serializer for RecipeViewSet."""
     tags = TagSerializer(many=True)
-    author = CustomUserSerializer(
+    author = UserSerializer(
         read_only=True,
     )
     ingredients = RecipeIngredientSerializer(

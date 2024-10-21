@@ -1,4 +1,5 @@
 from pathlib import Path
+from rest_framework import permissions
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -100,8 +101,13 @@ REST_FRAMEWORK = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'PERMISSIONS': {
-        'user_list': ['djoser.permissions.CurrentUserOrAdmin'],
-    }
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        'user': ['rest_framework.permissions.AllowAny'],
+    },
+    'SERIALIZERS': {
+        'current_user': 'api.serializers.UserSerializer',
+    },
+    'HIDE_USERS': False,
 }
 
 LANGUAGE_CODE = 'en-us'
