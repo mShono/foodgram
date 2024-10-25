@@ -2,6 +2,7 @@ import base64
 import uuid
 from django.core.files.base import ContentFile
 from djoser.serializers import SetPasswordSerializer
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from rest_framework.relations import PrimaryKeyRelatedField
@@ -57,9 +58,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='subscribed_to.first_name')
     last_name = serializers.CharField(source='subscribed_to.last_name')
     is_subscribed = serializers.SerializerMethodField()
-    # recipes = serializers.PrimaryKeyRelatedField(
-    #     queryset=Recipe.objects.all()
-    # )
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
     avatar = serializers.ImageField(source='subscribed_to.avatar')
@@ -79,6 +77,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
+        print(f'obj = {obj}')
         request = self.context.get('request')
         if request and not request.user.is_anonymous:
             return Subscription.objects.filter(subscriber=request.user, subscribed_to=obj.subscribed_to).exists()
@@ -123,7 +122,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if request and not request.user.is_anonymous:
-            return Subscription.objects.filter(subscriber=request.user, subscribed_to=obj.subscribed_to).exists()
+            return Subscription.objects.filter(subscriber=request.user, subscribed_to=obj).exists()
         return False
 
 
