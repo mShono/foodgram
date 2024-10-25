@@ -70,21 +70,29 @@ class Recipe(models.Model):
         verbose_name="Ингредиент",
     )
     name = models.CharField(
-        "Имя рецепта",
         max_length=MAX_LEN_RECIPE_NAME,
-        unique=True
+        unique=True,
+        verbose_name="Имя рецепта",
     )
     image = models.ImageField(
-        "Картинка",
-        upload_to="recipes/")
-    text = models.TextField("Текст рецепта")
+        upload_to="recipes/",
+        verbose_name="Картинка",
+    )
+    text = models.TextField(
+        verbose_name="Текст рецепта"
+    )
     cooking_time = models.PositiveSmallIntegerField(
-        "Время приготовления",
+        verbose_name="Время приготовления",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата публикации",
     )
 
     class Meta:
         verbose_name = "рецепт"
         verbose_name_plural = "Рецепты"
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.name
@@ -106,9 +114,6 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         "Количество",
     )
-    # amount = models.FloatField(
-    #     "Количество",
-    # )
 
     class Meta:
         verbose_name = "рецепт-ингредиент"
@@ -116,3 +121,32 @@ class RecipeIngredient(models.Model):
 
     def __str__(self):
         return f'{self.ingredients.name} в {self.recipe.name}: {self.amount}'
+
+
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+        verbose_name='Подписчик',
+    )
+    subscribed_to = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='followees',
+        verbose_name='Блогер',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['subscriber', 'subscribed_to'],
+                name='unique_user_following'
+            )
+        ]
+        default_related_name = 'subscriptions'
+        verbose_name = 'подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return f'{self.subscriber} на {self.subscribed_to}'

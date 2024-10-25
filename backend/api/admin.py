@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Tag, Ingredient, Recipe, RecipeIngredient
+from .models import Tag, Ingredient, Recipe, RecipeIngredient, Subscription
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -8,6 +8,12 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     empty_value_display = "-пусто-"
 
+
+@admin.register(Subscription)
+class Subscription(admin.ModelAdmin):
+    list_display = ("pk", "subscriber", "subscribed_to")
+    search_fields = ("subscriber",)
+    empty_value_display = "-пусто-"
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
