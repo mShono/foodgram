@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import filters, mixins, permissions, status
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .filters import IngredientFilter
 from .models import Tag, Ingredient, Recipe, RecipeIngredient, Subscription
@@ -125,6 +125,7 @@ class RecipeViewSet(ModelViewSet):
 
     queryset = Recipe.objects.all()
     serializer_class = RecipeReadSerializer, RecipeWriteSerializer
+    permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ("author", "tags",)
     # filterset_fields = ('is_favorited', 'is_in_shopping_cart',)

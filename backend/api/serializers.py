@@ -106,6 +106,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for CustomUserViewSet."""
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
@@ -115,9 +116,15 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "first_name",
             "last_name",
-            # "is_subscribed",
+            "is_subscribed",
             "avatar",
         )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request and not request.user.is_anonymous:
+            return Subscription.objects.filter(subscriber=request.user, subscribed_to=obj.subscribed_to).exists()
+        return False
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -198,15 +205,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "text",
             "cooking_time",
         )
-
-    # def to_internal_value(self, data):
-    #     image_data = data.get('image', None)
-    #     if image_data and isinstance(image_data, str) and image_data.startswith('data:image'):
-    #         format, imgstr = image_data.split(';base64,')
-    #         ext = format.split('/')[-1]
-    #         file_name = f'{uuid.uuid4()}.{ext}'
-    #         data['image'] = ContentFile(base64.b64decode(imgstr), name=file_name)
-    #     return super().to_internal_value(data)
 
     def validate_ingredients(self, value):
         if not value:
