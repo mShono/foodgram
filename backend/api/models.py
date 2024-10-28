@@ -150,3 +150,32 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f'{self.subscriber} на {self.subscribed_to}'
+
+
+class Favorite(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipe_favorite',
+        verbose_name='Рецепт',
+    )
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='user_favorite',
+        verbose_name='Пользователь',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_user_favorites'
+            )
+        ]
+        default_related_name = 'favorites'
+        verbose_name = 'избранное'
+        verbose_name_plural = 'Избранное'
+
+    def __str__(self):
+        return f'{self.recipe} в избранном {self.user}'

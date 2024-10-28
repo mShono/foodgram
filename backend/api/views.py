@@ -10,11 +10,14 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .filters import IngredientFilter
-from .models import Tag, Ingredient, Recipe, RecipeIngredient, Subscription
+from .models import (
+    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite
+)
 from .serializers import (
     UserSerializer, TagSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, RecipeIngredientSerializer,
-    AvatarSerializer, CustomSetPasswordSerializer, SubscriptionSerializer
+    AvatarSerializer, CustomSetPasswordSerializer, SubscriptionSerializer,
+    FavoriteSerializer
 )
 from users.models import CustomUser
 
@@ -67,7 +70,6 @@ class CustomUserViewSet(djoser_views.UserViewSet):
             followee = get_object_or_404(CustomUser, id=id)
         except Http404:
             return Response({"detail": "Страница не найдена."}, status=status.HTTP_404_NOT_FOUND)
-        print(followee)
         if request.method == "POST":
             if user.is_anonymous:
                 return Response({"detail": "Учетные данные не были предоставлены."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -80,10 +82,9 @@ class CustomUserViewSet(djoser_views.UserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
             subscription = Subscription.objects.filter(subscriber=user, subscribed_to=followee) #.first()
-            print(subscription)
             if not subscription:
                 return Response(
-                    {"detail": "Вы отписались этого автора."},
+                    {"detail": "Вы уже отписались этого автора."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             subscription.delete()
@@ -134,6 +135,32 @@ class RecipeViewSet(ModelViewSet):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
         return RecipeWriteSerializer
+
+    @action(["post", "delete"], detail=True, url_path="favorite", url_name="favorite")
+    def manage_favorites(self, request, pk=None):
+        user = request.user
+        try:
+            recipe = get_object_or_404(Recipe, id=pk)
+        except Http404:
+            return Response({"detail": "Страница не найдена."}, status=status.HTTP_404_NOT_FOUND)
+        if user.is_anonymous:
+            return Response({"detail": "Учетные данные не были предоставлены."}, status=status.HTTP_401_UNAUTHORIZED)
+        if request.method == "POST":
+            if Favorite.objects.filter(user=user, recipe=recipe).exists():
+                return Response({'detail': 'Этот рецепт уже есть в избранном.'}, status=status.HTTP_400_BAD_REQUEST)
+            favorite_obj = Favorite.objects.create(user=user, recipe=recipe)
+            serializer = FavoriteSerializer(favorite_obj, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == "DELETE":
+            favorite_obj = Favorite.objects.filter(user=user, recipe=recipe)
+            if not favorite_obj:
+                return Response(
+                    {"detail": "Этого рецепта не было в избранном."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            favorite_obj.delete()
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RecipeIngredientViewSet(ModelViewSet):

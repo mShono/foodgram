@@ -8,7 +8,9 @@ from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.response import Response
 
-from .models import Tag, Ingredient, Recipe, RecipeIngredient, Subscription
+from .models import (
+    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite
+)
 from users.models import CustomUser
 
 
@@ -91,16 +93,22 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         print(f'get_recipes_count_obj = {obj}')
         return obj.subscribed_to.recipes.count()
 
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #     ingredients = RecipeIngredient.objects.filter(recipe=instance)
-    #     ingredients_data = [
-    #         {"id": ingredient.ingredients.id, "amount": ingredient.amount}
-    #         for ingredient in ingredients
-    #     ]
-    #     data = {"ingredients": ingredients_data, **data}
-    #     return data
 
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Serializer for Subscriptions."""
+    id = serializers.IntegerField(source='recipe.id')
+    name = serializers.CharField(source='recipe.name')
+    image = serializers.CharField(source='recipe.image')
+    cooking_time = serializers.CharField(source='recipe.cooking_time')
+
+    class Meta:
+        model = Favorite
+        fields = (
+            "id",
+            "name",
+            "image",
+            "cooking_time",
+        )
 
 
 class UserSerializer(serializers.ModelSerializer):
