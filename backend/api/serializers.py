@@ -9,7 +9,8 @@ from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.response import Response
 
 from .models import (
-    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite
+    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite,
+    ShoppingCart
 )
 from users.models import CustomUser
 
@@ -103,6 +104,23 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
+        fields = (
+            "id",
+            "name",
+            "image",
+            "cooking_time",
+        )
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Serializer for Shopping Cart."""
+    id = serializers.IntegerField(source='recipe.id')
+    name = serializers.CharField(source='recipe.name')
+    image = serializers.CharField(source='recipe.image')
+    cooking_time = serializers.CharField(source='recipe.cooking_time')
+
+    class Meta:
+        model = ShoppingCart
         fields = (
             "id",
             "name",

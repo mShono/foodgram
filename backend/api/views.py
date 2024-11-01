@@ -1,7 +1,9 @@
+import csv
+
 from djoser import views as djoser_views
 from djoser import permissions as djoser_permissions
 from django.contrib.auth import get_user_model
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404, render
 from rest_framework import filters, mixins, permissions, status
@@ -11,13 +13,14 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .filters import IngredientFilter
 from .models import (
-    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite
+    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite,
+    ShoppingCart
 )
 from .serializers import (
     UserSerializer, TagSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer, RecipeIngredientSerializer,
     AvatarSerializer, CustomSetPasswordSerializer, SubscriptionSerializer,
-    FavoriteSerializer
+    FavoriteSerializer, ShoppingCartSerializer
 )
 from users.models import CustomUser
 
@@ -161,6 +164,58 @@ class RecipeViewSet(ModelViewSet):
             favorite_obj.delete()
             user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(["post", "delete"], detail=True, url_path="shopping_cart", url_name="shopping_cart")
+    def manage_shopping_cart(self, request, pk=None):
+        user = request.user
+        try:
+            recipe = get_object_or_404(Recipe, id=pk)
+        except Http404:
+            return Response({"detail": "Страница не найдена."}, status=status.HTTP_404_NOT_FOUND)
+        if user.is_anonymous:
+            return Response({"detail": "Учетные данные не были предоставлены."}, status=status.HTTP_401_UNAUTHORIZED)
+        if request.method == "POST":
+            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                return Response({'detail': 'Этот рецепт уже есть в списке покупок.'}, status=status.HTTP_400_BAD_REQUEST)
+            shopping_cart_obj = ShoppingCart.objects.create(user=user, recipe=recipe)
+            serializer = ShoppingCartSerializer(shopping_cart_obj, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == "DELETE":
+            shopping_cart_obj = ShoppingCart.objects.filter(user=user, recipe=recipe)
+            if not shopping_cart_obj:
+                return Response(
+                    {"detail": "Этого рецепта не было в списке покупок."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            shopping_cart_obj.delete()
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(["get"], detail=False, url_path="download_shopping_cart", url_name="download_shopping_cart", permission_classes=[IsAuthenticated])
+    def download_shopping_cart(self, request):
+        user = request.user
+        shopping_cart = ShoppingCart.objects.filter(user=user)
+        if not shopping_cart:
+            return Response({"detail": "Список покупок пуст."}, status=status.HTTP_400_BAD_REQUEST)
+        response = HttpResponse(
+            content_type="text/plain",
+            headers={"Content-Disposition": "attachment; filename=shopping_cart.txt"}
+        )
+        ingredients = {}
+        for item in shopping_cart:
+            for recipe_ingredient in item.recipe.recipe_ingredient.all():
+                ingredient_name = recipe_ingredient.ingredients.name
+                ingredient_amount = recipe_ingredient.amount
+                ingredient_measurement_unit = recipe_ingredient.ingredients.measurement_unit
+                name_measurement_unit = f'{ingredient_name} ({ingredient_measurement_unit})'
+                if name_measurement_unit in ingredients:
+                    ingredients[name_measurement_unit] += ingredient_amount
+                else:
+                    ingredients[name_measurement_unit] = ingredient_amount
+        response.write("Список покупок:\n\n")
+        for name_measurement_unit, amount in ingredients.items():
+            response.write(f"{name_measurement_unit}: {amount}\n")
+        return response
 
 
 class RecipeIngredientViewSet(ModelViewSet):

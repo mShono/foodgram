@@ -1,8 +1,10 @@
 from django.contrib import admin
 
 from .models import (
-    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite
+    Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite,
+    ShoppingCart
 )
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -12,14 +14,21 @@ class TagAdmin(admin.ModelAdmin):
 
 
 @admin.register(Subscription)
-class Subscription(admin.ModelAdmin):
+class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("pk", "subscriber", "subscribed_to")
     search_fields = ("subscriber",)
     empty_value_display = "-пусто-"
 
 
 @admin.register(Favorite)
-class Favorite(admin.ModelAdmin):
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ("pk", "recipe", "user")
+    search_fields = ("recipe",)
+    empty_value_display = "-пусто-"
+
+
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ("pk", "recipe", "user")
     search_fields = ("recipe",)
     empty_value_display = "-пусто-"
