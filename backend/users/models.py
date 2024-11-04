@@ -14,14 +14,6 @@ class CustomUser(AbstractUser):
         'first_name',
         'last_name'
     )
-    # ADMIN = "admin"
-    # MODERATOR = "moderator"
-    # USER = "user"
-    # ROLES = (
-    #     (USER, "Пользователь"),
-    #     (MODERATOR, "Модератор"),
-    #     (ADMIN, "Администратор"),
-    # )
 
     username = models.CharField(
         "Имя пользователя",

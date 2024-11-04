@@ -22,6 +22,7 @@ from .serializers import (
     AvatarSerializer, CustomSetPasswordSerializer, SubscriptionSerializer,
     FavoriteSerializer, ShoppingCartSerializer
 )
+from .permissions import IsAdminUserOrReadOnly
 from users.models import CustomUser
 
 
@@ -103,23 +104,24 @@ class CustomUserViewSet(djoser_views.UserViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TagViewSet(ReadOnlyModelViewSet):
+class TagViewSet(ModelViewSet):
     """Viewset for Tag model."""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    # permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (IsAdminUserOrReadOnly,)
     # lookup_field = "slug"
     # filter_backends = (filters.SearchFilter,)
     # pagination_class = PageNumberPagination
     # search_fields = ("name",)
 
 
-class IngredientViewSet(ReadOnlyModelViewSet):
+class IngredientViewSet(ModelViewSet):
     """Viewset for Ingredient model."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
 
