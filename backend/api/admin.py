@@ -36,23 +36,22 @@ class ShoppingCartAdmin(admin.ModelAdmin):
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ("pk", "name", "measurement_unit")
+    list_display = ("name", "measurement_unit")
     search_fields = ("name",)
     empty_value_display = "-пусто-"
-    # "pk" из list_display убрать
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = (
-        "pk", "author", "name",
-    )
+    list_display = ("author", "name", "favorites_count")
     search_fields = ("name", "author",)
     list_filter = ("tags",)
     empty_value_display = "-пусто-"
-    # на странице рецепта вывести общее число добавлений этого рецепта в избранное.
-    # "pk" из list_display убрать
 
+    @admin.display(description='Количество в избранном')
+    def favorites_count(self, obj):
+        """Returnes the ammount of adding the recipe to the favorites"""
+        return Favorite.objects.filter(recipe=obj).count()
 
 @admin.register(RecipeIngredient)
 class RecipeIngredientAdmin(admin.ModelAdmin):

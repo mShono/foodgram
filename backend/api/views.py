@@ -1,4 +1,4 @@
-import csv
+import short_url
 
 from djoser import views as djoser_views
 from djoser import permissions as djoser_permissions
@@ -6,12 +6,13 @@ from django.contrib.auth import get_user_model
 from django.http import Http404, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from rest_framework import filters, mixins, permissions, status
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from .filters import IngredientFilter
+from .filters import IngredientFilter, RecipeFilter
 from .models import (
     Tag, Ingredient, Recipe, RecipeIngredient, Subscription, Favorite,
     ShoppingCart
@@ -110,9 +111,9 @@ class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
     # lookup_field = "slug"
     # filter_backends = (filters.SearchFilter,)
-    # pagination_class = PageNumberPagination
     # search_fields = ("name",)
 
 
@@ -133,7 +134,8 @@ class RecipeViewSet(ModelViewSet):
     serializer_class = RecipeReadSerializer, RecipeWriteSerializer
     permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("author", "tags",)
+    filterset_class = RecipeFilter
+    # filterset_fields = ("author", "tags",)
     # filterset_fields = ('is_favorited', 'is_in_shopping_cart',)
 
     def get_serializer_class(self):
@@ -218,6 +220,14 @@ class RecipeViewSet(ModelViewSet):
         for name_measurement_unit, amount in ingredients.items():
             response.write(f"{name_measurement_unit}: {amount}\n")
         return response
+
+    @action(["get"], detail=True, url_path="get-link", url_name="get_link", permission_classes=[AllowAny])
+    def get_link(self, request, pk=None):
+        recipe = self.get_object()
+        short_id = short_url.encode_url(recipe.id)
+        print(f'short_id = {short_id}')
+        short_link = request.build_absolute_uri(reverse('short_recipe_link', args=[short_id]))
+        return Response({"short_link": short_link})
 
 
 class RecipeIngredientViewSet(ModelViewSet):
