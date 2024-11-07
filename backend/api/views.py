@@ -10,6 +10,7 @@ from django.urls import reverse
 from rest_framework import filters, mixins, permissions, status
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .filters import IngredientFilter, RecipeFilter
@@ -30,6 +31,20 @@ from users.models import CustomUser
 class CustomUserViewSet(djoser_views.UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_serializer_context(self):
+        print('I/m in get_serializer_context')
+        context = super().get_serializer_context()
+        query_params = self.request.query_params
+        print(f'query_params = {query_params}')
+        # recipes_limit = self.request.query_params.get('recipes_limit')
+        recipes_limit = self.request.query_params['recipes_limit']
+        print(f'recipes_limit = {recipes_limit}')
+        if recipes_limit is not None:
+            recipes_limit = int(recipes_limit)
+        context['recipes_limit'] = recipes_limit
+        return context
 
     @action(["post"], detail=False)
     @permission_classes([IsAuthenticated])
@@ -83,7 +98,8 @@ class CustomUserViewSet(djoser_views.UserViewSet):
             elif Subscription.objects.filter(subscriber=user, subscribed_to=followee).exists():
                 return Response({'detail': 'Вы уже подписаны на этого автора.'}, status=status.HTTP_400_BAD_REQUEST)
             subscription = Subscription.objects.create(subscriber=user, subscribed_to=followee)
-            serializer = SubscriptionSerializer(subscription, context={'request': request})
+            print(f'subscription_type = {type(subscription)}')
+            serializer = SubscriptionSerializer(subscription, context=self.get_serializer_context())
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
             subscription = Subscription.objects.filter(subscriber=user, subscribed_to=followee) #.first()
@@ -101,29 +117,33 @@ class CustomUserViewSet(djoser_views.UserViewSet):
     def show_subscriptions(self, request):
         user = request.user
         subscriptions = Subscription.objects.filter(subscriber=user)
-        serializer = SubscriptionSerializer(subscriptions, many=True, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        paginator = self.pagination_class()
+        paginated_subscriptions = paginator.paginate_queryset(subscriptions, request)
+        serializer = SubscriptionSerializer(paginated_subscriptions, many=True, context=self.get_serializer_context())
+        return paginator.get_paginated_response(serializer.data)
 
 
-class TagViewSet(ModelViewSet):
+class TagViewSet(ReadOnlyModelViewSet):
     """Viewset for Tag model."""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    # permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
+    pagination_class = None
     # lookup_field = "slug"
     # filter_backends = (filters.SearchFilter,)
     # search_fields = ("name",)
 
 
-class IngredientViewSet(ModelViewSet):
+class IngredientViewSet(ReadOnlyModelViewSet):
     """Viewset for Ingredient model."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
+    pagination_class = None
     filterset_class = IngredientFilter
 
 
@@ -135,6 +155,7 @@ class RecipeViewSet(ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    pagination_class = (LimitOffsetPagination,)
     # filterset_fields = ("author", "tags",)
     # filterset_fields = ('is_favorited', 'is_in_shopping_cart',)
 
@@ -143,7 +164,9 @@ class RecipeViewSet(ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    @action(["post", "delete"], detail=True, url_path="favorite", url_name="favorite")
+
+
+    @action(["post", "delete"], detail=True, url_path="favorite", url_name="favorite", pagination_class=[LimitOffsetPagination])
     def manage_favorites(self, request, pk=None):
         user = request.user
         try:
@@ -225,9 +248,9 @@ class RecipeViewSet(ModelViewSet):
     def get_link(self, request, pk=None):
         recipe = self.get_object()
         short_id = short_url.encode_url(recipe.id)
-        print(f'short_id = {short_id}')
+
         short_link = request.build_absolute_uri(reverse('short_recipe_link', args=[short_id]))
-        return Response({"short_link": short_link})
+        return Response({"short-link": short_link})
 
 
 class RecipeIngredientViewSet(ModelViewSet):
