@@ -13,7 +13,7 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsAdminUserOrReadOnly(BasePermission):
-    """Разрешение на редактирование информации только администратором
+    """Разрешение на редактирование информации только автором, администратором
     или чтение
     """
 

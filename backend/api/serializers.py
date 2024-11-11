@@ -5,6 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.files.base import ContentFile
 from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
+from django.db.utils import IntegrityError
 from rest_framework import serializers
 
 from rest_framework.relations import PrimaryKeyRelatedField
@@ -96,13 +97,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         recipes_limit = self.context.get('recipes_limit')
-        print(f'context = {self.context}')
-        print(f'recipes_limit in serializer = {recipes_limit}')
         recipes = obj.subscribed_to.recipes.all()
-        print(f'recipes_1 = {recipes}')
         if recipes_limit:
             recipes = recipes[:recipes_limit]
-            print(f'recipes_2 = {recipes}')
         return [
             {
                 'id': recipe.id,
@@ -259,7 +256,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def check_authenticated_user(self):
         user = self.context.get('request').user
-        print(f'user = {user}')
         if user.is_anonymous:
             raise NotAuthenticated("Учетные данные не были предоставлены.")
         return user
@@ -285,6 +281,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             tags = attrs["tags"]
             if len(tags) != len(set(tags)):
                 errors["tags"] = ["Обязательное поле"]
+            for tag in tags:
+                if not Tag.objects.filter(id=tag).exists():
+                    errors["tags"] = ["Обязательное поле"]
         if "name" in attrs:
             name = attrs["name"]
             if len(name) > MAX_LEN_RECIPE_NAME:
@@ -298,7 +297,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         user = self.check_authenticated_user()
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        recipe = Recipe.objects.create(author=user, **validated_data)
+        try:
+            recipe = Recipe.objects.create(author=user, **validated_data)
+        except IntegrityError:
+            raise serializers.ValidationError({"name": ["Рецепт с таким именем уже существует."]})
         recipe.tags.set(tags)
         for ingredient_data in ingredients:
             ingredient_id = ingredient_data['id']
@@ -326,12 +328,23 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        tags = instance.tags.all()
+        tags_id = [tag.id for tag in tags]
+        # data["tags"] = tags_id
         ingredients = RecipeIngredient.objects.filter(recipe=instance)
         ingredients_data = [
             {"id": ingredient.ingredients.id, "amount": ingredient.amount}
             for ingredient in ingredients
         ]
-        data = {"ingredients": ingredients_data, **data}
+        # data = {"ingredients": ingredients_data, **data}
+        data = {
+            "ingredients": ingredients_data,
+            "tags": tags_id,
+            "image": data.get("image"),
+            "name": data.get("name"),
+            "text": data.get("text"),
+            "cooking_time": data.get("cooking_time")
+        }
         return data
 
 
@@ -365,7 +378,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
-        print(request.user)
         if request and not request.user.is_anonymous:
             return Favorite.objects.filter(user=request.user, recipe=obj).exists()
         return False

@@ -156,13 +156,15 @@ class Favorite(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe_favorite',
+        # related_name='recipe_favorite',
+        related_name='favorites',
         verbose_name='Рецепт',
     )
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='user_favorite',
+        # related_name='user_favorite',
+        related_name='favorites',
         verbose_name='Пользователь',
     )
 
@@ -173,7 +175,7 @@ class Favorite(models.Model):
                 name='unique_user_favorites'
             )
         ]
-        default_related_name = 'favorites'
+        # default_related_name = 'favorites'
         verbose_name = 'избранное'
         verbose_name_plural = 'Избранное'
 
@@ -185,13 +187,15 @@ class ShoppingCart(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe_shoppingcart',
+        # related_name='recipe_shoppingcart',
+        related_name='shoppingcart',
         verbose_name='Рецепт',
     )
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='user_shoppingcart',
+        # related_name='user_shoppingcart',
+        related_name='shoppingcart',
         verbose_name='Пользователь',
     )
 
@@ -202,7 +206,7 @@ class ShoppingCart(models.Model):
                 name='unique_user_shoppingcart'
             )
         ]
-        default_related_name = 'shoppingcart'
+        # default_related_name = 'shoppingcart'
         verbose_name = 'список покупок'
         verbose_name_plural = 'Списки покупок'
 

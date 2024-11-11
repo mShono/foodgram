@@ -43,7 +43,7 @@ class IngredientAdmin(admin.ModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ("author", "name", "favorites_count")
+    list_display = ("pk", "author", "name", "favorites_count")
     search_fields = ("name", "author",)
     list_filter = ("tags",)
     empty_value_display = "-пусто-"
