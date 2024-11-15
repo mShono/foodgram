@@ -1,6 +1,6 @@
 import django_filters
 
-from .models import Ingredient, Tag, Recipe
+from .models import Ingredient, Recipe, Tag
 
 
 class IngredientFilter(django_filters.FilterSet):
@@ -16,23 +16,29 @@ class IngredientFilter(django_filters.FilterSet):
 
 
 class RecipeFilter(django_filters.FilterSet):
+    """Filter for Recipe model."""
+
     tags = django_filters.ModelMultipleChoiceFilter(
         field_name="tags__slug",
         to_field_name="slug",
         queryset=Tag.objects.all()
     )
-    is_favorited = django_filters.filters.CharFilter(method='is_favorited_filter')
-    is_in_shopping_cart = django_filters.filters.CharFilter(method='is_in_shopping_cart_filter')
+    is_favorited = django_filters.filters.CharFilter(
+        method="is_favorited_filter"
+    )
+    is_in_shopping_cart = django_filters.filters.CharFilter(
+        method="is_in_shopping_cart_filter"
+    )
 
     def is_in_shopping_cart_filter(self, queryset, name, value):
         user = self.request.user
-        if value == '1' and not user.is_anonymous:
+        if value == "1" and not user.is_anonymous:
             return queryset.filter(shoppingcart__user=user)
         return queryset
 
     def is_favorited_filter(self, queryset, name, value):
         user = self.request.user
-        if value == '1' and not user.is_anonymous:
+        if value == "1" and not user.is_anonymous:
             return queryset.filter(favorites__user=user)
         return queryset
 

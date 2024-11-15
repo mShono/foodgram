@@ -1,18 +1,18 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
-from backend.constants import (DEFAULT_USER_ROLE, MAX_LEN_EMAIL,
-                                 MAX_LEN_ROLE, MAX_LEN_USER_INFO)
+from backend.constants import MAX_LEN_EMAIL, MAX_LEN_USER_INFO
 
 
 class CustomUser(AbstractUser):
     """Кастомная модель пользователя."""
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = (
-        'username',
-        'first_name',
-        'last_name'
+        "username",
+        "first_name",
+        "last_name"
     )
 
     username = models.CharField(
@@ -21,8 +21,8 @@ class CustomUser(AbstractUser):
         unique=True,
         error_messages={
             "unique": "Пользователь с таким именем уже существует"
-        }
-        # validators=(validate_username, UnicodeUsernameValidator()),
+        },
+        validators=(UnicodeUsernameValidator(),),
     )
     email = models.EmailField(
         "Электронная почта",

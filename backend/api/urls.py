@@ -1,19 +1,15 @@
 import short_url
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import include, path
 from rest_framework import routers
 
-from .models import Recipe
-from .views import (
-    CustomUserViewSet, TagViewSet, IngredientViewSet, RecipeViewSet,
-)
+from .views import (CustomUserViewSet, IngredientViewSet, RecipeViewSet,
+                    TagViewSet)
 
 
 def redirect_to_recipe(request, short_id):
-    # Декодируем ID из короткого URL
     recipe_id = short_url.decode_url(short_id)
-    # recipe = get_object_or_404(Recipe, id=recipe_id)
-    return redirect('recipe-detail', pk=recipe_id)  # 'recipe-detail' - это URL name для детальной страницы рецепта
+    return redirect('recipe-detail', pk=recipe_id)
 
 
 router = routers.DefaultRouter()
