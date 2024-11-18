@@ -345,16 +345,16 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             {
                 **IngredientSerializer(ingredient.ingredients).data,
                 "amount": ingredient.amount
-             }
+            }
             for ingredient in ingredients
         ]
         is_favorited = Favorite.objects.filter(
-                user=instance.author,
-                recipe=instance
+            user=instance.author,
+            recipe=instance
         ).exists()
         is_in_shopping_cart = ShoppingCart.objects.filter(
-                user=instance.author,
-                recipe=instance
+            user=instance.author,
+            recipe=instance
         ).exists()
         data = {
             "id": instance.id,
@@ -403,7 +403,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             {
                 **IngredientSerializer(ingredient.ingredients).data,
                 "amount": ingredient.amount
-             }
+            }
             for ingredient in ingredients
         ]
 

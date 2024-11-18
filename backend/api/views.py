@@ -217,7 +217,12 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipe, id=kwargs["pk"])
         if recipe.author != request.user:
             return Response(
-                {"detail": "У вас недостаточно прав для выполнения данного действия."},
+                {
+                    "detail": (
+                        "У вас недостаточно прав для выполнения "
+                        "данного действия."
+                    )
+                },
                 status=status.HTTP_403_FORBIDDEN
             )
         return super().destroy(request, *args, **kwargs)
@@ -338,8 +343,12 @@ class RecipeViewSet(ModelViewSet):
             for recipe_ingredient in item.recipe.recipe_ingredient.all():
                 ingredient_name = recipe_ingredient.ingredients.name
                 ingredient_amount = recipe_ingredient.amount
-                ingredient_measurement_unit = recipe_ingredient.ingredients.measurement_unit
-                name_measurement_unit = f"{ingredient_name} ({ingredient_measurement_unit})"
+                ingredient_measurement_unit = (
+                    recipe_ingredient.ingredients.measurement_unit
+                )
+                name_measurement_unit = (
+                    f"{ingredient_name} ({ingredient_measurement_unit})"
+                )
                 if name_measurement_unit in ingredients:
                     ingredients[name_measurement_unit] += ingredient_amount
                 else:
