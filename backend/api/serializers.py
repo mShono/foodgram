@@ -183,7 +183,6 @@ class TagSerializer(serializers.ModelSerializer):
             "name",
             "slug",
         )
-        # extra_kwargs = {"url": {"lookup_field": "slug"}}
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -257,6 +256,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         required_fields = [
             "tags", "ingredients", "image", "name", "text", "cooking_time"
         ]
+        if self.context.get("request").method == "PATCH":
+            required_fields.remove("image")
         errors = {}
         for field in required_fields:
             if field not in attrs or not attrs[field]:
@@ -323,12 +324,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             RecipeIngredient.objects.create(
                 ingredients_id=ingredient_id, recipe=instance, amount=amount
             )
+        if "image" not in validated_data:
+            validated_data["image"] = instance.image
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         tags = instance.tags.all()
-        # tags_id = [tag.id for tag in tags]
         tags_data = [
             {"id": tag.id, "name": tag.name, "slug": tag.slug}
             for tag in tags
@@ -376,10 +378,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     author = UserSerializer(
         read_only=True,
     )
-    ingredients = RecipeIngredientSerializer(
-        source="recipe_ingredient",
-        many=True,
-    )
+    ingredients = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -397,6 +396,16 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             "text",
             "cooking_time",
         )
+
+    def get_ingredients(self, obj):
+        ingredients = RecipeIngredient.objects.filter(recipe=obj)
+        return [
+            {
+                **IngredientSerializer(ingredient.ingredients).data,
+                "amount": ingredient.amount
+             }
+            for ingredient in ingredients
+        ]
 
     def get_is_favorited(self, obj):
         request = self.context.get("request")

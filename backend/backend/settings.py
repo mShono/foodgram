@@ -1,7 +1,6 @@
 import os
 
 from pathlib import Path
-from rest_framework import permissions
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -10,7 +9,6 @@ SECRET_KEY = 'django-insecure-x%9re_^)+ax+h5$rg1rvbav3rced_b-a^z5v+46q^6v#8hp*$z
 DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "123.123.123.123", "localhost"]
-# ALLOWED_HOSTS = ["*"]
 
 
 INSTALLED_APPS = [
@@ -59,13 +57,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -96,8 +87,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 3,
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",

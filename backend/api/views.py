@@ -6,7 +6,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser import views as djoser_views
 from rest_framework import status
 from rest_framework.decorators import action, permission_classes
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -22,6 +21,7 @@ from .serializers import (AvatarSerializer, CustomSetPasswordSerializer,
                           RecipeWriteSerializer, ShoppingCartSerializer,
                           SubscriptionSerializer, TagSerializer,
                           UserSerializer)
+from .paginators import PageAndLimitPagination
 
 
 class CustomUserViewSet(djoser_views.UserViewSet):
@@ -29,7 +29,7 @@ class CustomUserViewSet(djoser_views.UserViewSet):
 
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
-    pagination_class = LimitOffsetPagination
+    pagination_class = PageAndLimitPagination
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -181,7 +181,6 @@ class TagViewSet(ReadOnlyModelViewSet):
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
-    pagination_class = None
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
@@ -191,7 +190,6 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
-    pagination_class = None
     filterset_class = IngredientFilter
 
 
@@ -203,6 +201,7 @@ class RecipeViewSet(ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    pagination_class = PageAndLimitPagination
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
@@ -227,8 +226,6 @@ class RecipeViewSet(ModelViewSet):
         ["post", "delete"],
         detail=True,
         url_path="favorite",
-        url_name="favorite",
-        pagination_class=[LimitOffsetPagination]
     )
     def manage_favorites(self, request, pk=None):
         user = request.user
