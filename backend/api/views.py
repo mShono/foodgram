@@ -25,7 +25,7 @@ from .paginators import PageAndLimitPagination
 
 
 class CustomUserViewSet(djoser_views.UserViewSet):
-    """ViewSet for Custom User model"""
+    """Вьюсет для модели CustomUser."""
 
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
@@ -78,7 +78,6 @@ class CustomUserViewSet(djoser_views.UserViewSet):
             )
         if request.method == "DELETE":
             user.avatar.delete()
-            user.save()
             return Response(
                 {"detail": "Аватар успешно удалён."},
                 status=status.HTTP_204_NO_CONTENT
@@ -109,14 +108,14 @@ class CustomUserViewSet(djoser_views.UserViewSet):
                 {"detail": "Учетные данные не были предоставлены."},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        try:
-            followee = get_object_or_404(CustomUser, id=id)
-        except Http404:
-            return Response(
-                {"detail": "Страница не найдена."},
-                status=status.HTTP_404_NOT_FOUND
-            )
         if request.method == "POST":
+            try:
+                followee = get_object_or_404(CustomUser, id=id)
+            except Http404:
+                return Response(
+                    {"detail": "Страница не найдена."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             if user == followee:
                 return Response(
                     {"detail": "Вы не можете подписаться на самого себя."},
@@ -134,21 +133,27 @@ class CustomUserViewSet(djoser_views.UserViewSet):
                 subscriber=user, subscribed_to=followee
             )
             serializer = SubscriptionSerializer(
-                subscription, context=self.get_serializer_context()
+                 subscription,
+                 context=self.get_serializer_context()
             )
+            # serializer = SubscriptionSerializer(
+            #      data={"subscriber": user.id, "subscribed_to": followee.id},
+            #      context=self.get_serializer_context()
+            # )
+            # serializer.is_valid(raise_exception=True)
+            # serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            subscription = Subscription.objects.filter(
+            followee = get_object_or_404(CustomUser, id=id)
+            deleted_count, _ = Subscription.objects.filter(
                 subscriber=user,
                 subscribed_to=followee
-            )
-            if not subscription:
+            ).delete()
+            if deleted_count == 0:
                 return Response(
                     {"detail": "Вы уже отписались этого автора."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            subscription.delete()
-            user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -175,7 +180,7 @@ class CustomUserViewSet(djoser_views.UserViewSet):
 
 
 class TagViewSet(ReadOnlyModelViewSet):
-    """Viewset for Tag model."""
+    """Вьюсет для модели Tag."""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -184,7 +189,7 @@ class TagViewSet(ReadOnlyModelViewSet):
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
-    """Viewset for Ingredient model."""
+    """Вьюсет для модели Ingredient."""
 
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
@@ -194,7 +199,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(ModelViewSet):
-    """Viewset for Ingredient model."""
+    """Вьюсет для модели Ingredient."""
 
     queryset = Recipe.objects.all()
     serializer_class = (RecipeReadSerializer, RecipeWriteSerializer,)
@@ -259,14 +264,16 @@ class RecipeViewSet(ModelViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            favorite_obj = Favorite.objects.filter(user=user, recipe=recipe)
-            if not favorite_obj.exists():
+            deleted_count, _ = Favorite.objects.filter(
+                user=user, recipe=recipe
+            ).delete()
+            if deleted_count == 0:
                 return Response(
                     {"detail": "Этого рецепта не было в избранном."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            favorite_obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
 
     @action(
         ["post", "delete"],
@@ -304,17 +311,15 @@ class RecipeViewSet(ModelViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            shopping_cart_obj = ShoppingCart.objects.filter(
+            deleted_count, _ = ShoppingCart.objects.filter(
                 user=user,
                 recipe=recipe
-            )
-            if not shopping_cart_obj:
+            ).delete()
+            if deleted_count == 0:
                 return Response(
                     {"detail": "Этого рецепта не было в списке покупок."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            shopping_cart_obj.delete()
-            user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -376,7 +381,7 @@ class RecipeViewSet(ModelViewSet):
 
 
 class RecipeIngredientViewSet(ModelViewSet):
-    """Viewset for Ingredient model."""
+    """Вьюсет для модели RecipeIngredient."""
 
     queryset = RecipeIngredient.objects.all()
     serializer_class = RecipeIngredientSerializer
