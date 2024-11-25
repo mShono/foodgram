@@ -1,9 +1,8 @@
 from rest_framework.pagination import PageNumberPagination
 
+from backend.constants import PAGE_SIZE
+
 
 class PageAndLimitPagination(PageNumberPagination):
     page_size_query_param = "limit"
-    page_size = 6
-
-    def get_paginated_response(self, data):
-        return super().get_paginated_response(data)
+    page_size = PAGE_SIZE
