@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser
+from .models import CustomUser, Subscription
 
 
 @admin.register(CustomUser)
@@ -17,3 +17,10 @@ class CustomUserAdmin(UserAdmin):
     search_fields = (
         "username", "email"
     )
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("pk", "subscriber", "subscribed_to")
+    search_fields = ("subscriber",)
+    empty_value_display = "-пусто-"

@@ -1,34 +1,12 @@
 from django.contrib import admin
 
-from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingCart, Subscription, Tag)
-
+from .models import (Tag, Ingredient, Recipe, 
+                     RecipeIngredient, Favorite, ShoppingCart)
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ("pk", "name", "slug")
     search_fields = ("name",)
-    empty_value_display = "-пусто-"
-
-
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("pk", "subscriber", "subscribed_to")
-    search_fields = ("subscriber",)
-    empty_value_display = "-пусто-"
-
-
-@admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
-    list_display = ("pk", "recipe", "user")
-    search_fields = ("recipe",)
-    empty_value_display = "-пусто-"
-
-
-@admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = ("pk", "recipe", "user")
-    search_fields = ("recipe",)
     empty_value_display = "-пусто-"
 
 
@@ -59,4 +37,18 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
         "pk", "recipe", "ingredients", "amount",
     )
     search_fields = ("recipie",)
+    empty_value_display = "-пусто-"
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ("pk", "recipe", "user")
+    search_fields = ("recipe",)
+    empty_value_display = "-пусто-"
+
+
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ("pk", "recipe", "user")
+    search_fields = ("recipe",)
     empty_value_display = "-пусто-"

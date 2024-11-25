@@ -52,3 +52,34 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Subscription(models.Model):
+    """Модель подписок."""
+
+    subscriber = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="subscribers",
+        verbose_name="Подписчик",
+    )
+    subscribed_to = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="followees",
+        verbose_name="Блогер",
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["subscriber", "subscribed_to"],
+                name="unique_user_following"
+            )
+        ]
+        default_related_name = "subscriptions"
+        verbose_name = "подписка"
+        verbose_name_plural = "Подписки"
+
+    def __str__(self):
+        return f"{self.subscriber} на {self.subscribed_to}"

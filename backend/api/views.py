@@ -10,11 +10,11 @@ from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from users.models import CustomUser
+from users.models import CustomUser, Subscription
 
 from .filters import IngredientFilter, RecipeFilter
-from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingCart, Subscription, Tag)
+from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                           ShoppingCart, Tag)
 from .serializers import (AvatarSerializer, CustomSetPasswordSerializer,
                           FavoriteSerializer, IngredientSerializer,
                           RecipeIngredientSerializer, RecipeReadSerializer,

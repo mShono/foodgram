@@ -1,13 +1,13 @@
 from django.db import models
 
-from backend.constants import (MAX_LEN_INGREDIENT_NAME,
-                               MAX_LEN_MEASURMENT_UNIT, MAX_LEN_RECIPE_NAME,
-                               MAX_LEN_TAG_NAME)
+from backend.constants import (MAX_LEN_INGREDIENT_NAME, MAX_LEN_TAG_NAME,
+                               MAX_LEN_RECIPE_NAME, MAX_LEN_MEASURMENT_UNIT)
+from django.core.validators import MinValueValidator, MaxValueValidator
 from users.models import CustomUser
 
 
 class Tag(models.Model):
-    """Tag's model."""
+    """Модель для тегов."""
 
     name = models.CharField(
         "Название",
@@ -29,7 +29,7 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    """Ingredient's model."""
+    """Модель для ингредиентов."""
 
     name = models.CharField(
         "Ингредиент",
@@ -50,7 +50,7 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
-    """Recipe's model."""
+    """Модель для рецептов."""
 
     tags = models.ManyToManyField(
         Tag,
@@ -83,7 +83,8 @@ class Recipe(models.Model):
     text = models.TextField(
         verbose_name="Текст рецепта"
     )
-    cooking_time = models.PositiveSmallIntegerField(
+    cooking_time = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(1440)],
         verbose_name="Время приготовления",
     )
     created_at = models.DateTimeField(
@@ -101,7 +102,8 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    """The model connecting Recipe and Ingredient models."""
+    """Модель соединяюща модель рецептов и ингредиентов."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -113,8 +115,9 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Ингредиент",
     )
-    amount = models.PositiveSmallIntegerField(
-        "Количество",
+    amount = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(10000)],
+        verbose_name="Количество",
     )
 
     class Meta:
@@ -125,39 +128,8 @@ class RecipeIngredient(models.Model):
         return f"{self.ingredients.name} в {self.recipe.name}: {self.amount}"
 
 
-class Subscription(models.Model):
-    """Subscription's model."""
-
-    subscriber = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name="subscribers",
-        verbose_name="Подписчик",
-    )
-    subscribed_to = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name="followees",
-        verbose_name="Блогер",
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["subscriber", "subscribed_to"],
-                name="unique_user_following"
-            )
-        ]
-        default_related_name = "subscriptions"
-        verbose_name = "подписка"
-        verbose_name_plural = "Подписки"
-
-    def __str__(self):
-        return f"{self.subscriber} на {self.subscribed_to}"
-
-
 class Favorite(models.Model):
-    """Favorite's model."""
+    """Модель избранного."""
 
     recipe = models.ForeignKey(
         Recipe,
@@ -187,7 +159,7 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
-    """Shopping Cart's model."""
+    """Модель списка покупок."""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,

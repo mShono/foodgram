@@ -8,10 +8,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 
 from backend.constants import MAX_LEN_RECIPE_NAME
-from users.models import CustomUser
+from users.models import CustomUser, Subscription
 
-from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingCart, Subscription, Tag)
+from recipe.models import (Ingredient, Favorite, Recipe, RecipeIngredient,
+                           ShoppingCart, Tag)
 
 
 class Base64ImageField(serializers.ImageField):
