@@ -45,17 +45,6 @@ class AvatarSerializer(serializers.ModelSerializer):
         fields = ("avatar",)
 
 
-class CustomSetPasswordSerializer(SetPasswordSerializer):
-    """Serializer for setting a new password."""
-
-    def validate(self, attrs):
-        super().validate(attrs)
-        return {
-            "new_password": attrs["new_password"],
-            "current_password": attrs["current_password"]
-        }
-
-
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Serializer for Subscriptions."""
 

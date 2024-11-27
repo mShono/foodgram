@@ -15,7 +15,7 @@ from users.models import CustomUser, Subscription
 from .filters import IngredientFilter, RecipeFilter
 from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                            ShoppingCart, Tag)
-from .serializers import (AvatarSerializer, CustomSetPasswordSerializer,
+from .serializers import (AvatarSerializer,
                           FavoriteSerializer, IngredientSerializer,
                           RecipeIngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, ShoppingCartSerializer,
@@ -37,22 +37,6 @@ class CustomUserViewSet(djoser_views.UserViewSet):
             recipes_limit = int(self.request.query_params["recipes_limit"])
             context["recipes_limit"] = recipes_limit
         return context
-
-    @action(["post"], detail=False)
-    @permission_classes([IsAuthenticated])
-    def set_password(self, request, *args, **kwargs):
-        user = request.user
-        serializer = CustomSetPasswordSerializer(
-            data=request.data,
-            context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        user.set_password(serializer.validated_data["new_password"])
-        user.save()
-        return Response(
-            serializer.validated_data,
-            status=status.HTTP_204_NO_CONTENT
-        )
 
     @action(
         ["put", "delete"],
