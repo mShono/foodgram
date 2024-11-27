@@ -36,7 +36,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class AvatarSerializer(serializers.ModelSerializer):
-    """Serializer for uploading avatar."""
+    """Сериализатор для загрузки аватара."""
 
     avatar = Base64ImageField()
 
@@ -45,76 +45,65 @@ class AvatarSerializer(serializers.ModelSerializer):
         fields = ("avatar",)
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
-    """Serializer for Subscriptions."""
-
-    email = serializers.EmailField(source="subscribed_to.email")
-    id = serializers.IntegerField(source="subscribed_to.id")
-    username = serializers.CharField(source="subscribed_to.username")
-    first_name = serializers.CharField(source="subscribed_to.first_name")
-    last_name = serializers.CharField(source="subscribed_to.last_name")
-    is_subscribed = serializers.SerializerMethodField()
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
-    avatar = serializers.ImageField(source="subscribed_to.avatar")
+class RecipeShortInfoSerializer(serializers.ModelSerializer):
+    """Сериализатор для вывода рецепта."""
 
     class Meta:
-        model = Subscription
-        fields = (
-            "email",
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "is_subscribed",
-            "recipes",
-            "recipes_count",
-            "avatar",
-        )
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get("request")
-        if request and not request.user.is_anonymous:
-            return Subscription.objects.filter(
-                subscriber=request.user,
-                subscribed_to=obj.subscribed_to
-            ).exists()
-        return False
-
-    def get_recipes(self, obj):
-        recipes_limit = self.context.get("recipes_limit")
-        recipes = obj.subscribed_to.recipes.all()
-        if recipes_limit:
-            recipes = recipes[:recipes_limit]
-        return [
-            {
-                "id": recipe.id,
-                "name": recipe.name,
-                "image": recipe.image.url,
-                "cooking_time": recipe.cooking_time
-            } for recipe in recipes
-        ]
-
-    def get_recipes_count(self, obj):
-        return obj.subscribed_to.recipes.count()
-
-
-class FavoriteSerializer(serializers.ModelSerializer):
-    """Serializer for Subscriptions."""
-
-    id = serializers.IntegerField(source="recipe.id")
-    name = serializers.CharField(source="recipe.name")
-    image = serializers.CharField(source="recipe.image")
-    cooking_time = serializers.IntegerField(source="recipe.cooking_time")
-
-    class Meta:
-        model = Favorite
+        model = Recipe
         fields = (
             "id",
             "name",
             "image",
             "cooking_time",
         )
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор для подписок."""
+
+    class Meta:
+        model = Subscription
+        fields = (
+            "subscriber",
+            "subscribed_to",
+        )
+
+    def to_representation(self, instance):
+        user = instance.subscribed_to
+        recipes_limit = self.context.get("recipes_limit")
+        recipes = user.recipes.all()
+        if recipes_limit:
+            recipes = recipes[:recipes_limit]
+        recipes_data = RecipeShortInfoSerializer(recipes, many=True).data
+        subscription = Subscription.objects.filter(
+            subscriber=instance.subscriber,
+            subscribed_to=user
+        ).exists()
+        return {
+            "email": user.email,
+            "id": user.id,
+            "username": user.username,
+            "last_name": user.last_name,
+            "is_subscribed": subscription,
+            "recipes": recipes_data,
+            "recipes_count": getattr(instance, "recipes_count", 0),
+            "avatar": user.avatar.url if user.avatar else None,
+        }
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Serializer for Subscriptions."""
+
+    recipe = RecipeShortInfoSerializer()
+
+    class Meta:
+        model = Favorite
+        fields = ("recipe",)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        recipe_data = data.pop("recipe")
+        return recipe_data
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
