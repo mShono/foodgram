@@ -1,5 +1,5 @@
 import short_url
-from django.db.models import Count, Sum
+from django.db.models import Count, Exists, F, OuterRef, Q, Sum, Case, When, Value, BooleanField
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -198,6 +198,33 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = PageAndLimitPagination
+
+    def get_queryset(self):
+        """Добавление аннотированных полей is_favorited и is_in_shopping_cart."""
+        user = self.request.user
+        if not user.is_authenticated:
+            return Recipe.objects.annotate(
+                is_favorited=Value(False, output_field=BooleanField()),
+                is_in_shopping_cart=Value(False, output_field=BooleanField())
+            )
+        return Recipe.objects.annotate(
+            is_favorited=Case(
+                When(
+                    favorites__user=user,
+                    then=True
+                ),
+                default=False,
+                output_field=BooleanField()
+            ),
+            is_in_shopping_cart=Case(
+                When(
+                    shoppingcart__user=user,
+                    then=True
+                ),
+                default=False,
+                output_field=BooleanField()
+            )
+        )
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:

@@ -109,21 +109,11 @@ class FavoriteSerializer(serializers.ModelSerializer):
 class ShoppingCartSerializer(serializers.ModelSerializer):
     """Сериализатор для корзины покупок."""
 
-    # id = serializers.IntegerField(source="recipe.id")
-    # name = serializers.CharField(source="recipe.name")
-    # image = serializers.CharField(source="recipe.image")
-    # cooking_time = serializers.IntegerField(source="recipe.cooking_time")
     recipe = RecipeShortInfoSerializer()
 
     class Meta:
         model = ShoppingCart
         fields = ("recipe",)
-        # fields = (
-        #     "id",
-        #     "name",
-        #     "image",
-        #     "cooking_time",
-        # )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -364,8 +354,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     ingredients = serializers.SerializerMethodField()
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.BooleanField()
+    is_in_shopping_cart = serializers.BooleanField()
 
     class Meta:
         model = Recipe
@@ -391,21 +381,3 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             }
             for ingredient in ingredients
         ]
-
-    def get_is_favorited(self, obj):
-        request = self.context.get("request")
-        if request and not request.user.is_anonymous:
-            return Favorite.objects.filter(
-                user=request.user,
-                recipe=obj
-            ).exists()
-        return False
-
-    def get_is_in_shopping_cart(self, obj):
-        request = self.context.get("request")
-        if request and not request.user.is_anonymous:
-            return ShoppingCart.objects.filter(
-                user=request.user,
-                recipe=obj
-            ).exists()
-        return False
