@@ -114,12 +114,19 @@ class CustomUserViewSet(djoser_views.UserViewSet):
                     {"detail": "Вы уже подписаны на этого автора."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            serializer = SubscriptionSerializer(
-                 data={"subscriber": user.id, "subscribed_to": followee.id},
-                 context=self.get_serializer_context()
+            subscription = Subscription.objects.create(
+                subscriber=user,
+                subscribed_to=followee
             )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            annotated_subscription = Subscription.objects.filter(
+                id=subscription.id
+            ).annotate(
+                recipes_count=Count("subscribed_to__recipes")
+            ).first()
+            serializer = SubscriptionSerializer(
+                annotated_subscription,
+                context=self.get_serializer_context()
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
             followee = get_object_or_404(CustomUser, id=id)
@@ -143,15 +150,12 @@ class CustomUserViewSet(djoser_views.UserViewSet):
     @permission_classes([IsAuthenticated])
     def show_subscriptions(self, request):
         user = request.user
-        subscriptions = Subscription.objects.filter(subscriber=user).select_related(
+        subscriptions = Subscription.objects.filter(
+            subscriber=user
+        ).select_related(
             "subscribed_to"
         ).annotate(
             recipes_count=Count("subscribed_to__recipes")
-        ).prefetch_related(
-            Prefetch(
-                "subscribed_to__recipes",
-                queryset=Recipe.objects.only("id", "name", "image", "cooking_time")
-            )
         )
         paginator = self.pagination_class()
         paginated_subscriptions = paginator.paginate_queryset(
@@ -330,6 +334,16 @@ class RecipeViewSet(ModelViewSet):
                 "Content-Disposition": "attachment; filename=shopping_cart.txt"
             }
         )
+        # subscriptions = Subscription.objects.filter(subscriber=user).select_related(
+        #     "subscribed_to"
+        # ).annotate(
+        #     recipes_count=Count("subscribed_to__recipes")
+        # ).prefetch_related(
+        #     Prefetch(
+        #         "subscribed_to__recipes",
+        #         queryset=Recipe.objects.only("id", "name", "image", "cooking_time")
+        #     )
+        # )
         ingredients = {}
         for item in shopping_cart:
             for recipe_ingredient in item.recipe.recipe_ingredient.all():
