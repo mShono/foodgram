@@ -1,5 +1,5 @@
 import short_url
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Sum
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -227,21 +227,11 @@ class RecipeViewSet(ModelViewSet):
         ["post", "delete"],
         detail=True,
         url_path="favorite",
+        permission_classes=[IsAuthenticated]
     )
     def manage_favorites(self, request, pk=None):
         user = request.user
-        if user.is_anonymous:
-            return Response(
-                {"detail": "Учетные данные не были предоставлены."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        try:
-            recipe = get_object_or_404(Recipe, id=pk)
-        except Http404:
-            return Response(
-                {"detail": "Страница не найдена."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        recipe = get_object_or_404(Recipe, id=pk)
         if request.method == "POST":
             if Favorite.objects.filter(user=user, recipe=recipe).exists():
                 return Response(
@@ -270,22 +260,12 @@ class RecipeViewSet(ModelViewSet):
         ["post", "delete"],
         detail=True,
         url_path="shopping_cart",
-        url_name="shopping_cart"
+        url_name="shopping_cart",
+        permission_classes=[IsAuthenticated]
     )
     def manage_shopping_cart(self, request, pk=None):
         user = request.user
-        if user.is_anonymous:
-            return Response(
-                {"detail": "Учетные данные не были предоставлены."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        try:
-            recipe = get_object_or_404(Recipe, id=pk)
-        except Http404:
-            return Response(
-                {"detail": "Страница не найдена."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        recipe = get_object_or_404(Recipe, id=pk)
         if request.method == "POST":
             if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
                 return Response(
@@ -322,46 +302,29 @@ class RecipeViewSet(ModelViewSet):
     )
     def download_shopping_cart(self, request):
         user = request.user
-        shopping_cart = ShoppingCart.objects.filter(user=user)
-        if not shopping_cart:
+        if not ShoppingCart.objects.filter(user=user).exists():
             return Response(
                 {"detail": "Список покупок пуст."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        ingredients = (
+            RecipeIngredient.objects.filter(recipe__shoppingcart__user=user)
+            .values(
+                "ingredients__name",
+                "ingredients__measurement_unit",
+            ).annotate(total_amount=Sum("amount"))
+        )
         response = HttpResponse(
             content_type="text/plain",
             headers={
                 "Content-Disposition": "attachment; filename=shopping_cart.txt"
             }
         )
-        # subscriptions = Subscription.objects.filter(subscriber=user).select_related(
-        #     "subscribed_to"
-        # ).annotate(
-        #     recipes_count=Count("subscribed_to__recipes")
-        # ).prefetch_related(
-        #     Prefetch(
-        #         "subscribed_to__recipes",
-        #         queryset=Recipe.objects.only("id", "name", "image", "cooking_time")
-        #     )
-        # )
-        ingredients = {}
-        for item in shopping_cart:
-            for recipe_ingredient in item.recipe.recipe_ingredient.all():
-                ingredient_name = recipe_ingredient.ingredients.name
-                ingredient_amount = recipe_ingredient.amount
-                ingredient_measurement_unit = (
-                    recipe_ingredient.ingredients.measurement_unit
-                )
-                name_measurement_unit = (
-                    f"{ingredient_name} ({ingredient_measurement_unit})"
-                )
-                if name_measurement_unit in ingredients:
-                    ingredients[name_measurement_unit] += ingredient_amount
-                else:
-                    ingredients[name_measurement_unit] = ingredient_amount
-        response.write("Список покупок:\n\n")
-        for name_measurement_unit, amount in ingredients.items():
-            response.write(f"{name_measurement_unit}: {amount}\n")
+        for ingredient in ingredients:
+            name_measurement_unit = (
+                f"{ingredient['ingredients__name']} ({ingredient['ingredients__measurement_unit']})"
+            )
+            response.write(f"{name_measurement_unit}: {ingredient['total_amount']}\n")
         return response
 
     @action(
