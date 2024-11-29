@@ -114,25 +114,25 @@ class CustomUserViewSet(djoser_views.UserViewSet):
                     {"detail": "Вы уже подписаны на этого автора."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            subscription = Subscription.objects.create(
-                subscriber=user,
-                subscribed_to=followee
+            serializer = SubscriptionSerializer(
+                data={"subscriber": user.id, "subscribed_to": followee.id}
             )
+            serializer.is_valid(raise_exception=True)
+            subscription = serializer.save()
             annotated_subscription = Subscription.objects.filter(
                 id=subscription.id
             ).annotate(
                 recipes_count=Count("subscribed_to__recipes")
             ).first()
-            serializer = SubscriptionSerializer(
+            response_serializer = SubscriptionSerializer(
                 annotated_subscription,
                 context=self.get_serializer_context()
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            followee = get_object_or_404(CustomUser, id=id)
             deleted_count, _ = Subscription.objects.filter(
                 subscriber=user,
-                subscribed_to=followee
+                subscribed_to=get_object_or_404(CustomUser, id=id)
             ).delete()
             if deleted_count == 0:
                 return Response(
@@ -260,16 +260,17 @@ class RecipeViewSet(ModelViewSet):
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
         if request.method == "POST":
-            if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            if Favorite.objects.filter(user=user.id, recipe=recipe.id).exists():
                 return Response(
                     {"detail": "Этот рецепт уже есть в избранном."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            favorite_obj = Favorite.objects.create(user=user, recipe=recipe)
             serializer = FavoriteSerializer(
-                favorite_obj,
+                data={"recipe": recipe.id},
                 context={"request": request}
             )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
             deleted_count, _ = Favorite.objects.filter(
