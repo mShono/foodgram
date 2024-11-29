@@ -95,7 +95,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 class FavoriteSerializer(serializers.ModelSerializer):
     """Сериализатор для подписок."""
 
-    # recipe = RecipeShortInfoSerializer()
     recipe = serializers.PrimaryKeyRelatedField(
         queryset=Recipe.objects.all()
     )
@@ -105,25 +104,22 @@ class FavoriteSerializer(serializers.ModelSerializer):
         fields = ("recipe",)
 
     def to_representation(self, instance):
-        # data = super().to_representation(instance)
-        # recipe_data = data.pop("recipe")
-        # return recipe_data
         return RecipeShortInfoSerializer(instance.recipe).data
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
     """Сериализатор для корзины покупок."""
 
-    recipe = RecipeShortInfoSerializer()
+    recipe = serializers.PrimaryKeyRelatedField(
+        queryset=Recipe.objects.all()
+    )
 
     class Meta:
         model = ShoppingCart
         fields = ("recipe",)
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        recipe_data = data.pop("recipe")
-        return recipe_data
+        return RecipeShortInfoSerializer(instance.recipe).data
 
 
 class UserSerializer(serializers.ModelSerializer):
