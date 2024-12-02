@@ -1,8 +1,7 @@
+from backend.constants import MAX_LEN_EMAIL, MAX_LEN_USER_INFO
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-
-from backend.constants import MAX_LEN_EMAIL, MAX_LEN_USER_INFO
 
 
 class CustomUser(AbstractUser):

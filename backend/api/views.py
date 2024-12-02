@@ -1,28 +1,26 @@
 import short_url
-from django.db.models import Count, Exists, F, OuterRef, Q, Sum, Case, When, Value, BooleanField
+from django.db.models import BooleanField, Case, Count, Sum, Value, When
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser import views as djoser_views
+from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                           ShoppingCart, Tag)
 from rest_framework import status
 from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-
 from users.models import CustomUser, Subscription
 
 from .filters import IngredientFilter, RecipeFilter
-from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                           ShoppingCart, Tag)
-from .serializers import (AvatarSerializer,
-                          FavoriteSerializer, IngredientSerializer,
-                          RecipeIngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer, ShoppingCartSerializer,
-                          SubscriptionSerializer, TagSerializer,
-                          UserSerializer)
 from .paginators import PageAndLimitPagination
+from .serializers import (AvatarSerializer, FavoriteSerializer,
+                          IngredientSerializer, RecipeIngredientSerializer,
+                          RecipeReadSerializer, RecipeWriteSerializer,
+                          ShoppingCartSerializer, SubscriptionSerializer,
+                          TagSerializer, UserSerializer)
 
 
 class CustomUserViewSet(djoser_views.UserViewSet):
@@ -192,9 +190,12 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     filterset_class = IngredientFilter
 
 
-def manage_recipe_action(request, model, serializer_class, user, recipe_id, error_message, delete_message):
+def manage_recipe_action(
+    request, model, serializer_class,
+    user, recipe_id, error_message, delete_message
+):
     """
-    Функция для обработки добавления/удаления рецепта в избранное или корзину.
+    Функция для добавления/удаления рецепта в избранное или корзину.
     """
     recipe = get_object_or_404(Recipe, id=recipe_id)
 
@@ -212,7 +213,9 @@ def manage_recipe_action(request, model, serializer_class, user, recipe_id, erro
         serializer.save(user=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     if request.method == "DELETE":
-        deleted_count, _ = model.objects.filter(user=user, recipe=recipe).delete()
+        deleted_count, _ = model.objects.filter(
+            user=user, recipe=recipe
+        ).delete()
         if deleted_count == 0:
             return Response(
                 {"detail": delete_message},
@@ -236,7 +239,9 @@ class RecipeViewSet(ModelViewSet):
     pagination_class = PageAndLimitPagination
 
     def get_queryset(self):
-        """Добавление аннотированных полей is_favorited и is_in_shopping_cart."""
+        """
+        Добавление аннотированных полей is_favorited и is_in_shopping_cart.
+        """
         user = self.request.user
         if not user.is_authenticated:
             return Recipe.objects.annotate(
@@ -401,9 +406,12 @@ class RecipeViewSet(ModelViewSet):
         )
         for ingredient in ingredients:
             name_measurement_unit = (
-                f"{ingredient['ingredients__name']} ({ingredient['ingredients__measurement_unit']})"
+                f"{ingredient['ingredients__name']} "
+                f"({ingredient['ingredients__measurement_unit']})"
             )
-            response.write(f"{name_measurement_unit}: {ingredient['total_amount']}\n")
+            response.write(
+                f"{name_measurement_unit}: {ingredient['total_amount']}\n"
+            )
         return response
 
     @action(

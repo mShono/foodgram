@@ -1,17 +1,13 @@
 import base64
 import uuid
 
+from backend.constants import MAX_LEN_RECIPE_NAME
 from django.core.files.base import ContentFile
-from django.db.utils import IntegrityError
-from djoser.serializers import SetPasswordSerializer
+from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                           ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
-
-from backend.constants import MAX_LEN_RECIPE_NAME
 from users.models import CustomUser, Subscription
-
-from recipe.models import (Ingredient, Favorite, Recipe, RecipeIngredient,
-                           ShoppingCart, Tag)
 
 
 class Base64ImageField(serializers.ImageField):

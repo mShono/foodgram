@@ -1,5 +1,4 @@
 import django_filters
-
 from recipe.models import Ingredient, Recipe, Tag
 
 
@@ -30,6 +29,10 @@ class RecipeFilter(django_filters.FilterSet):
         method="is_in_shopping_cart_filter"
     )
 
+    class Meta:
+        model = Recipe
+        fields = ("author", "tags", "is_favorited", "is_in_shopping_cart")
+
     def is_in_shopping_cart_filter(self, queryset, name, value):
         user = self.request.user
         if value == "1" and not user.is_anonymous:
@@ -41,7 +44,3 @@ class RecipeFilter(django_filters.FilterSet):
         if value == "1" and not user.is_anonymous:
             return queryset.filter(favorites__user=user)
         return queryset
-
-    class Meta:
-        model = Recipe
-        fields = ("author", "tags", "is_favorited", "is_in_shopping_cart")

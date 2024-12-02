@@ -10,3 +10,4 @@ pytest-pythonpath==0.7.3
 django-filter==23.1
 djoser==2.1.0
 short_url==1.2.2
+flake8-docstrings==1.6.0

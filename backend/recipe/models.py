@@ -1,8 +1,8 @@
+from backend.constants import (MAX_LEN_INGREDIENT_NAME,
+                               MAX_LEN_MEASURMENT_UNIT, MAX_LEN_RECIPE_NAME,
+                               MAX_LEN_TAG_NAME)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
-from backend.constants import (MAX_LEN_INGREDIENT_NAME, MAX_LEN_TAG_NAME,
-                               MAX_LEN_RECIPE_NAME, MAX_LEN_MEASURMENT_UNIT)
-from django.core.validators import MinValueValidator, MaxValueValidator
 from users.models import CustomUser
 
 
@@ -113,6 +113,7 @@ class RecipeIngredient(models.Model):
     ingredients = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
+        related_name="recipe_ingredient",
         verbose_name="Ингредиент",
     )
     amount = models.IntegerField(
