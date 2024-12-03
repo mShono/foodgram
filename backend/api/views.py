@@ -1,3 +1,4 @@
+import io
 import short_url
 from django.db.models import BooleanField, Case, Count, Sum, Value, When
 from django.http import Http404, HttpResponse
@@ -239,25 +240,20 @@ class RecipeViewSet(ModelViewSet):
         Добавление аннотированных полей is_favorited и is_in_shopping_cart.
         """
         user = self.request.user
+        queryset = super().get_queryset()
         if not user.is_authenticated:
-            return Recipe.objects.annotate(
+            return queryset.annotate(
                 is_favorited=Value(False, output_field=BooleanField()),
                 is_in_shopping_cart=Value(False, output_field=BooleanField())
             )
-        return Recipe.objects.annotate(
+        return queryset.annotate(
             is_favorited=Case(
-                When(
-                    favorites__user=user,
-                    then=True
-                ),
+                When(favorites__user=user, then=True),
                 default=False,
                 output_field=BooleanField()
             ),
             is_in_shopping_cart=Case(
-                When(
-                    shoppingcart__user=user,
-                    then=True
-                ),
+                When(shoppingcart__user=user, then=True),
                 default=False,
                 output_field=BooleanField()
             )
@@ -301,6 +297,19 @@ class RecipeViewSet(ModelViewSet):
             delete_message="Этого рецепта не было в списке покупок."
         )
 
+    @staticmethod
+    def generate_shopping_cart_file(ingredients):
+        """Генерирует содержимое файла для списка покупок."""
+        buffer = io.BytesIO()
+        for ingredient in ingredients:
+            name_measurement_unit = (
+                f"{ingredient['ingredients__name']} "
+                f"({ingredient['ingredients__measurement_unit']})"
+            )
+            buffer.write(f"{name_measurement_unit}: {ingredient['total_amount']}\n".encode('utf-8'))
+        buffer.seek(0)
+        return buffer
+
     @action(
         ["get"],
         detail=False,
@@ -321,21 +330,14 @@ class RecipeViewSet(ModelViewSet):
                 "ingredients__measurement_unit",
             ).annotate(total_amount=Sum("amount"))
         )
-        response = HttpResponse(
+        file_content = self.generate_shopping_cart_file(ingredients)
+        return HttpResponse(
+            file_content.getvalue(),
             content_type="text/plain",
             headers={
                 "Content-Disposition": "attachment; filename=shopping_cart.txt"
             }
         )
-        for ingredient in ingredients:
-            name_measurement_unit = (
-                f"{ingredient['ingredients__name']} "
-                f"({ingredient['ingredients__measurement_unit']})"
-            )
-            response.write(
-                f"{name_measurement_unit}: {ingredient['total_amount']}\n"
-            )
-        return response
 
     @action(
         ["get"],
