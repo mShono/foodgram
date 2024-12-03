@@ -8,7 +8,7 @@ from djoser import views as djoser_views
 from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                            ShoppingCart, Tag)
 from rest_framework import status
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -16,7 +16,7 @@ from users.models import CustomUser, Subscription
 
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import PageAndLimitPagination
-from .permissions import AuthorOrReadOnly
+from .permissions import IsAuthenticatedAuthorOrReadOnly
 from .serializers import (AvatarSerializer, FavoriteSerializer,
                           IngredientSerializer, RecipeIngredientSerializer,
                           RecipeReadSerializer, RecipeWriteSerializer,
@@ -30,6 +30,7 @@ class CustomUserViewSet(djoser_views.UserViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     pagination_class = PageAndLimitPagination
+    permission_classes = [IsAuthenticatedAuthorOrReadOnly]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -37,6 +38,11 @@ class CustomUserViewSet(djoser_views.UserViewSet):
             recipes_limit = int(self.request.query_params["recipes_limit"])
             context["recipes_limit"] = recipes_limit
         return context
+
+    def get_permissions(self):
+        if self.action == "get_me":
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
     @action(
         ["put", "delete"],
@@ -46,11 +52,6 @@ class CustomUserViewSet(djoser_views.UserViewSet):
     )
     def manage_avatar(self, request):
         user = request.user
-        if user.is_anonymous:
-            return Response(
-                {"detail": "Authentication credentials were not provided."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
         if request.method == "PUT":
             serializer = AvatarSerializer(data=request.data, instance=user)
             if serializer.is_valid():
@@ -67,16 +68,15 @@ class CustomUserViewSet(djoser_views.UserViewSet):
                 status=status.HTTP_204_NO_CONTENT
             )
 
-    @action(["get"], detail=False, url_path="me", url_name="current_user")
-    @permission_classes([IsAuthenticated])
+    @action(
+        ["get"],
+        detail=False,
+        url_path="me",
+        url_name="current_user",
+    )
     def get_me(self, request):
         user = request.user
         serializer = self.get_serializer(user)
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication credentials were not provided."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
@@ -87,11 +87,6 @@ class CustomUserViewSet(djoser_views.UserViewSet):
     )
     def manage_subscriptions(self, request, id=None):
         user = request.user
-        if user.is_anonymous:
-            return Response(
-                {"detail": "Учетные данные не были предоставлены."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
         if request.method == "POST":
             try:
                 followee = get_object_or_404(CustomUser, id=id)
@@ -147,9 +142,9 @@ class CustomUserViewSet(djoser_views.UserViewSet):
         ["get"],
         detail=False,
         url_path="subscriptions",
-        url_name="subscriptions"
+        url_name="subscriptions",
+        permission_classes=[IsAuthenticated]
     )
-    @permission_classes([IsAuthenticated])
     def show_subscriptions(self, request):
         user = request.user
         subscriptions = Subscription.objects.filter(
@@ -234,7 +229,7 @@ class RecipeViewSet(ModelViewSet):
         'tags', 'ingredients'
     )
     serializer_class = (RecipeReadSerializer, RecipeWriteSerializer,)
-    permission_classes = [AuthorOrReadOnly]
+    permission_classes = [IsAuthenticatedAuthorOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = PageAndLimitPagination
@@ -273,30 +268,10 @@ class RecipeViewSet(ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def destroy(self, request, *args, **kwargs):
-        if request.user.is_anonymous:
-            return Response(
-                {"detail": "Учетные данные не были предоставлены."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        recipe = get_object_or_404(Recipe, id=kwargs["pk"])
-        if recipe.author != request.user:
-            return Response(
-                {
-                    "detail": (
-                        "У вас недостаточно прав для выполнения "
-                        "данного действия."
-                    )
-                },
-                status=status.HTTP_403_FORBIDDEN
-            )
-        return super().destroy(request, *args, **kwargs)
-
     @action(
         ["post", "delete"],
         detail=True,
         url_path="favorite",
-        permission_classes=[IsAuthenticated]
     )
     def manage_favorites(self, request, pk=None):
         return manage_recipe_action(
@@ -314,7 +289,6 @@ class RecipeViewSet(ModelViewSet):
         detail=True,
         url_path="shopping_cart",
         url_name="shopping_cart",
-        permission_classes=[IsAuthenticated]
     )
     def manage_shopping_cart(self, request, pk=None):
         return manage_recipe_action(
@@ -332,7 +306,6 @@ class RecipeViewSet(ModelViewSet):
         detail=False,
         url_path="download_shopping_cart",
         url_name="download_shopping_cart",
-        permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
         user = request.user
