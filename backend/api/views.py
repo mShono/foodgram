@@ -1,4 +1,5 @@
 import io
+
 import short_url
 from django.db.models import BooleanField, Case, Count, Sum, Value, When
 from django.http import Http404, HttpResponse
@@ -306,7 +307,11 @@ class RecipeViewSet(ModelViewSet):
                 f"{ingredient['ingredients__name']} "
                 f"({ingredient['ingredients__measurement_unit']})"
             )
-            buffer.write(f"{name_measurement_unit}: {ingredient['total_amount']}\n".encode('utf-8'))
+            buffer.write(
+                (
+                    f"{name_measurement_unit}: {ingredient['total_amount']}\n"
+                ).encode('utf-8')
+            )
         buffer.seek(0)
         return buffer
 

@@ -1,9 +1,10 @@
-from backend.constants import (MAX_LEN_INGREDIENT_NAME,
-                               MAX_LEN_MEASURMENT_UNIT, MAX_LEN_RECIPE_NAME,
-                               MAX_LEN_TAG_NAME)
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from users.models import CustomUser
+
+from backend.constants import (MAX_LEN_INGREDIENT_NAME,
+                               MAX_LEN_MEASURMENT_UNIT, MAX_LEN_RECIPE_NAME,
+                               MAX_LEN_TAG_NAME)
 
 
 class Tag(models.Model):
@@ -83,7 +84,7 @@ class Recipe(models.Model):
     text = models.TextField(
         verbose_name="Текст рецепта"
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(1440)],
         verbose_name="Время приготовления",
     )
@@ -116,7 +117,7 @@ class RecipeIngredient(models.Model):
         related_name="recipe_ingredient",
         verbose_name="Ингредиент",
     )
-    amount = models.IntegerField(
+    amount = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10000)],
         verbose_name="Количество",
     )
@@ -161,6 +162,7 @@ class Favorite(models.Model):
 
 class ShoppingCart(models.Model):
     """Модель списка покупок."""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,

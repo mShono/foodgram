@@ -1,12 +1,11 @@
 import base64
 import uuid
 
-from backend.constants import MAX_LEN_RECIPE_NAME
 from django.core.files.base import ContentFile
 from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                            ShoppingCart, Tag)
 from rest_framework import serializers
-from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+from rest_framework.exceptions import PermissionDenied
 from users.models import CustomUser, Subscription
 
 
@@ -198,7 +197,9 @@ class RecipeIngredientWriteSerializer(serializers.Serializer):
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Сериализатор для записи рецептов."""
 
-    ingredients = RecipeIngredientWriteSerializer(many=True, write_only=True, required=True, allow_empty=False)
+    ingredients = RecipeIngredientWriteSerializer(
+        many=True, write_only=True, required=True, allow_empty=False
+    )
     author = UserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -227,22 +228,38 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             required_fields.remove("image")
         for field in required_fields:
             if field not in attrs or not attrs[field]:
-                raise serializers.ValidationError(f'{field} = ["Обязательное поле"]')
+                raise serializers.ValidationError(
+                    f'{field} = ["Обязательное поле"]'
+                )
         if "ingredients" in attrs:
             ingredients = attrs["ingredients"]
             ingredients_ids = [ingredient['id'] for ingredient in ingredients]
             if len(ingredients_ids) != len(set(ingredients_ids)):
-                raise serializers.ValidationError({"ingredients": ["Ингредиенты не должны повторяться"]})
+                raise serializers.ValidationError(
+                    {"ingredients": [
+                        "Ингредиенты не должны повторяться"
+                    ]}
+                )
             for ingredient in ingredients:
                 if not Ingredient.objects.filter(id=ingredient["id"]).exists():
-                    raise serializers.ValidationError({"ingredients": ["Такого ингредиента не существует"]})
+                    raise serializers.ValidationError(
+                        {"ingredients": [
+                            "Такого ингредиента не существует"
+                        ]}
+                    )
                 if ingredient["amount"] <= 0:
-                    raise serializers.ValidationError({"ingredients": ["Количество не должно быть меньше нуля"]})
+                    raise serializers.ValidationError(
+                        {"ingredients": [
+                            "Количество не должно быть меньше нуля"
+                        ]}
+                    )
         if "tags" in attrs:
             tags = attrs["tags"]
             tag_ids = [tag.id for tag in tags]
             if len(tag_ids) != len(set(tag_ids)):
-                raise serializers.ValidationError({"tags": ["Тэги не должны повторяться"]})
+                raise serializers.ValidationError(
+                    {"tags": ["Тэги не должны повторяться"]}
+                )
         return attrs
 
     def _update_tags_and_ingredients(self, recipe, tags, ingredients):
