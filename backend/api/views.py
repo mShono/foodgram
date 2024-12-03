@@ -14,7 +14,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from users.models import CustomUser, Subscription
+from users.models import User, Subscription
 
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import PageAndLimitPagination
@@ -26,10 +26,10 @@ from .serializers import (AvatarSerializer, FavoriteSerializer,
                           TagSerializer, UserSerializer)
 
 
-class CustomUserViewSet(djoser_views.UserViewSet):
-    """Вьюсет для модели CustomUser."""
+class UserViewSet(djoser_views.UserViewSet):
+    """Вьюсет для модели Пользователя."""
 
-    queryset = CustomUser.objects.all()
+    queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = PageAndLimitPagination
     permission_classes = [IsAuthenticatedAuthorOrReadOnly]
@@ -91,7 +91,7 @@ class CustomUserViewSet(djoser_views.UserViewSet):
         user = request.user
         if request.method == "POST":
             try:
-                followee = get_object_or_404(CustomUser, id=id)
+                followee = get_object_or_404(User, id=id)
             except Http404:
                 return Response(
                     {"detail": "Страница не найдена."},
@@ -131,7 +131,7 @@ class CustomUserViewSet(djoser_views.UserViewSet):
         if request.method == "DELETE":
             deleted_count, _ = Subscription.objects.filter(
                 subscriber=user,
-                subscribed_to=get_object_or_404(CustomUser, id=id)
+                subscribed_to=get_object_or_404(User, id=id)
             ).delete()
             if deleted_count == 0:
                 return Response(
@@ -249,12 +249,12 @@ class RecipeViewSet(ModelViewSet):
             )
         return queryset.annotate(
             is_favorited=Case(
-                When(favorites__user=user, then=True),
+                When(recipe_favorite_related__user=user, then=True),
                 default=False,
                 output_field=BooleanField()
             ),
             is_in_shopping_cart=Case(
-                When(shoppingcart__user=user, then=True),
+                When(recipe_shoppingcart_related__user=user, then=True),
                 default=False,
                 output_field=BooleanField()
             )
@@ -329,7 +329,9 @@ class RecipeViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         ingredients = (
-            RecipeIngredient.objects.filter(recipe__shoppingcart__user=user)
+            RecipeIngredient.objects.filter(
+                recipe__recipe_shoppingcart_related__user=user
+            )
             .values(
                 "ingredients__name",
                 "ingredients__measurement_unit",

@@ -5,7 +5,7 @@ from django.db import models
 from backend.constants import MAX_LEN_EMAIL, MAX_LEN_USER_INFO
 
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     """Кастомная модель пользователя."""
 
     USERNAME_FIELD = "email"
@@ -58,13 +58,13 @@ class Subscription(models.Model):
     """Модель подписок."""
 
     subscriber = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name="subscribers",
         verbose_name="Подписчик",
     )
     subscribed_to = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name="followees",
         verbose_name="Блогер",

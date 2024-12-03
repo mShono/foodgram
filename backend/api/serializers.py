@@ -6,7 +6,7 @@ from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                            ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
-from users.models import CustomUser, Subscription
+from users.models import User, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
@@ -36,7 +36,7 @@ class AvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField()
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = ("avatar",)
 
 
@@ -123,7 +123,7 @@ class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = (
             "email",
             "id",

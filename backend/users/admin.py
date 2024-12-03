@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser, Subscription
+from .models import User, Subscription
 
 
-@admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
+@admin.register(User)
+class UserAdmin(UserAdmin):
     list_display = (
         "username",
         "email",

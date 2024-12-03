@@ -6,17 +6,47 @@
 Проект реализован на Django Rest Framework.
 
 ## Подготовка проекта foodgram к запуску:
+Для локального запуска проекта вам понадобятся:
+- Docker
+- git
+
 1. Клонируйте репозиторий и перейдите в него в командной строке:
 ```
 git clone https://github.com/mShono/foodgram
 ```
 cd foodgram
-2. Находясь в папке infra, выполните команду docker compose up --build. 
+2. Создайте файл .env в корневой директории и заполните его переменными окружения:
+POSTGRES_USER=<имя_пользователя>      # Имя пользователя PostgreSQL
+POSTGRES_PASSWORD=<пароль>            # Пароль для PostgreSQL
+POSTGRES_DB=<название_базы_данных>    # Имя базы данных
+DB_HOST=db                            # Хост базы данных (по умолчанию 'db')
+DB_PORT=5432                          # Порт PostgreSQL
+SECRET_KEY=<ваш_секретный_ключ>       # Django SECRET_KEY
+DEBUG=True                            # Включение режима отладки (True/False)
+ALLOWED_HOSTS=127.0.0.1,localhost     # Хосты, на которых доступен проект
+3. Находясь в папке infra, выполните команду docker compose up --build. 
+# Контейнеры
+- db (PostgreSQL):
+Хранит данные приложения.
+Образ: postgres:13.10.
 
-- по адресу http://localhost находится основной сайт веб-приложения
-- по адресу http://localhost/api/docs/ находится спецификация API
-- по адресу http://localhost/api/ можно направлять API запросы в базу данных
-- по адресу http://localhost/admin находится админка бэкенда
+- backend (Django backend):
+Основное приложение Django с бизнес-логикой.
+Образ: masher88/foodgram-back:latest.
+
+- frontend (React frontend):
+Содержит статические файлы для фронтенда.
+Образ: infra-frontend:latest.
+
+- nginx (Reverse Proxy):
+Управляет запросами и раздачей статических файлов.
+Образ: nginx:1.25.4-alpine.
+
+## После запуска контейнеров:
+- Основной сайт веб-приложения будет доступен по адресу: http://localhost
+- Спецификация API доступна по адресу: http://localhost/api/docs/
+- API запросы можно отправлять на: http://localhost/api/
+- Админка доступна по адресу: http://localhost/admin/
 
 ### Автор проекта
 * Мария Самохина - https://github.com/mShono

@@ -1,6 +1,6 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from users.models import CustomUser
+from users.models import User
 
 from backend.constants import (MAX_LEN_INGREDIENT_NAME,
                                MAX_LEN_MEASURMENT_UNIT, MAX_LEN_RECIPE_NAME,
@@ -59,7 +59,7 @@ class Recipe(models.Model):
         verbose_name="Тэг",
     )
     author = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name="recipes",
         verbose_name="Автор",
@@ -130,19 +130,21 @@ class RecipeIngredient(models.Model):
         return f"{self.ingredients.name} в {self.recipe.name}: {self.amount}"
 
 
-class Favorite(models.Model):
-    """Модель избранного."""
+class CommonInfo(models.Model):
+    """
+    Абстрактная модель с полями для Избранного и Списка покупок.
+    """
 
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name="favorites",
+        related_name="%(app_label)s_%(class)s_related",
         verbose_name="Рецепт",
     )
     user = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
-        related_name="favorites",
+        related_name="%(app_label)s_%(class)s_related",
         verbose_name="Пользователь",
     )
 
@@ -153,6 +155,26 @@ class Favorite(models.Model):
                 name="unique_user_favorites"
             )
         ]
+        abstract = True
+
+
+class Favorite(CommonInfo):
+    """Модель избранного."""
+
+    # recipe = models.ForeignKey(
+    #     Recipe,
+    #     on_delete=models.CASCADE,
+    #     related_name="favorites",
+    #     verbose_name="Рецепт",
+    # )
+    # user = models.ForeignKey(
+    #     User,
+    #     on_delete=models.CASCADE,
+    #     related_name="favorites",
+    #     verbose_name="Пользователь",
+    # )
+
+    class Meta:
         verbose_name = "избранное"
         verbose_name_plural = "Избранное"
 
@@ -160,29 +182,23 @@ class Favorite(models.Model):
         return f"{self.recipe} в избранном {self.user}"
 
 
-class ShoppingCart(models.Model):
+class ShoppingCart(CommonInfo):
     """Модель списка покупок."""
 
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name="shoppingcart",
-        verbose_name="Рецепт",
-    )
-    user = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name="shoppingcart",
-        verbose_name="Пользователь",
-    )
+    # recipe = models.ForeignKey(
+    #     Recipe,
+    #     on_delete=models.CASCADE,
+    #     related_name="shoppingcart",
+    #     verbose_name="Рецепт",
+    # )
+    # user = models.ForeignKey(
+    #     User,
+    #     on_delete=models.CASCADE,
+    #     related_name="shoppingcart",
+    #     verbose_name="Пользователь",
+    # )
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["recipe", "user"],
-                name="unique_user_shoppingcart"
-            )
-        ]
         verbose_name = "список покупок"
         verbose_name_plural = "Списки покупок"
 
