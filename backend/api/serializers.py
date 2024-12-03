@@ -219,12 +219,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "cooking_time",
         )
 
-    def check_authenticated_user(self):
-        user = self.context.get("request").user
-        if user.is_anonymous:
-            raise NotAuthenticated("Учетные данные не были предоставлены.")
-        return user
-
     def validate(self, attrs):
         required_fields = [
             "tags", "ingredients", "image", "name", "text", "cooking_time"
@@ -266,7 +260,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
 
     def create(self, validated_data):
-        user = self.check_authenticated_user()
+        user = self.context.get("request").user
         tags = validated_data.pop("tags")
         ingredients = validated_data.pop("ingredients")
         recipe = Recipe.objects.create(author=user, **validated_data)
@@ -274,7 +268,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        user = self.check_authenticated_user()
+        user = self.context.get("request").user
         if user != instance.author:
             raise PermissionDenied(
                 "У вас недостаточно прав для выполнения данного действия."
