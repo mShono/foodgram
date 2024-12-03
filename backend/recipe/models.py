@@ -84,7 +84,7 @@ class Recipe(models.Model):
         verbose_name="Текст рецепта"
     )
     cooking_time = models.IntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(1440)],
+        validators=[MinValueValidator(1), MaxValueValidator(1440)],
         verbose_name="Время приготовления",
     )
     created_at = models.DateTimeField(
@@ -117,7 +117,7 @@ class RecipeIngredient(models.Model):
         verbose_name="Ингредиент",
     )
     amount = models.IntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(10000)],
+        validators=[MinValueValidator(1), MaxValueValidator(10000)],
         verbose_name="Количество",
     )
 
