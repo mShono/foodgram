@@ -11,7 +11,7 @@ from users.models import CustomUser, Subscription
 
 
 class Base64ImageField(serializers.ImageField):
-    """Custom field to handle image encoding to Base64."""
+    """Настраиваемое поле для обработки кодировки изображений в Base64."""
 
     def to_representation(self, value):
         if value:
@@ -66,7 +66,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         user = instance.subscribed_to
-        recipes_limit = self.context.get("recipes_limit")
+        recipes_limit = self.context.get("recipes_limit", 6)
         recipes = user.recipes.all()
         if recipes_limit:
             recipes = recipes[:recipes_limit]
@@ -119,7 +119,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for CustomUserViewSet."""
+    """Сериализатор для кастомной модели пользователя."""
 
     is_subscribed = serializers.SerializerMethodField()
 
@@ -146,7 +146,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """Serializer for TagViewSet."""
+    """Сериализатор для Тегов."""
 
     class Meta:
         model = Tag
@@ -158,7 +158,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Serializer for IngredientViewSet."""
+    """Сериализатор для Ингредиентов."""
 
     class Meta:
         model = Ingredient
@@ -170,7 +170,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    """Serializer for RecipeIngredientViewSet."""
+    """Сериализатор для модели RecipeIngredient."""
 
     id = serializers.IntegerField(source="ingredients.id")
     name = serializers.CharField(source="ingredients.name")
@@ -198,7 +198,7 @@ class RecipeIngredientWriteSerializer(serializers.Serializer):
 class RecipeWriteSerializer(serializers.ModelSerializer):
     """Сериализатор для записи рецептов."""
 
-    ingredients = RecipeIngredientWriteSerializer(many=True, write_only=True)
+    ingredients = RecipeIngredientWriteSerializer(many=True, write_only=True, required=True)
     author = UserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -218,11 +218,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "text",
             "cooking_time",
         )
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     if self.context['request'].method in ['PATCH', 'PUT']:
-    #         self.fields['image'].required = False
 
     def check_authenticated_user(self):
         user = self.context.get("request").user
@@ -297,8 +292,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data.pop("tags")
         ingredients = validated_data.pop("ingredients")
         self._update_tags_and_ingredients(instance, tags, ingredients)
-        # if "image" not in validated_data:
-        #     validated_data.pop("image", None)
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -344,7 +337,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
-    """Reading serializer for RecipeViewSet."""
+    """Сериализатор для чтения рецептов."""
 
     tags = TagSerializer(many=True)
     author = UserSerializer(

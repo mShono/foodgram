@@ -3,7 +3,7 @@ from recipe.models import Ingredient, Recipe, Tag
 
 
 class IngredientFilter(django_filters.FilterSet):
-    """Filter for Ingredient model."""
+    """Фильтр для модели Ингредиентов."""
 
     name = django_filters.CharFilter(
         field_name="name", lookup_expr="istartswith"
@@ -15,7 +15,7 @@ class IngredientFilter(django_filters.FilterSet):
 
 
 class RecipeFilter(django_filters.FilterSet):
-    """Filter for Recipe model."""
+    """Фильтр для модели Рецептов."""
 
     tags = django_filters.ModelMultipleChoiceFilter(
         field_name="tags__slug",
