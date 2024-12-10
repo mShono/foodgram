@@ -192,9 +192,7 @@ def manage_recipe_action(
     request, model, serializer_class,
     user, recipe_id, error_message, delete_message
 ):
-    """
-    Функция для добавления/удаления рецепта в избранное или корзину.
-    """
+    """Добавление/удаление рецепта в избранное или корзину."""
     recipe = get_object_or_404(Recipe, id=recipe_id)
 
     if request.method == "POST":
@@ -237,15 +235,8 @@ class RecipeViewSet(ModelViewSet):
     pagination_class = PageAndLimitPagination
 
     def annotate_queryset(self, queryset):
-        """
-        Добавляет аннотированные поля is_favorited и is_in_shopping_cart.
-        """
+        """Общий метод для аннотирования is_favorited и is_in_shopping_cart."""
         user = self.request.user
-        # if not user.is_authenticated:
-        #     return queryset.annotate(
-        #         is_favorited=Value(False, output_field=BooleanField()),
-        #         is_in_shopping_cart=Value(False, output_field=BooleanField())
-        #     )
         return queryset.annotate(
             is_favorited=Case(
                 When(recipe_favorite_related__user=user, then=True),
@@ -260,9 +251,7 @@ class RecipeViewSet(ModelViewSet):
         )
 
     def get_queryset(self):
-        """
-        Добавление аннотированных полей is_favorited и is_in_shopping_cart.
-        """
+        """Аннотирование полей is_favorited и is_in_shopping_cart."""
         user = self.request.user
         queryset = super().get_queryset()
         if not user.is_authenticated:
@@ -270,19 +259,6 @@ class RecipeViewSet(ModelViewSet):
                 is_favorited=Value(False, output_field=BooleanField()),
                 is_in_shopping_cart=Value(False, output_field=BooleanField())
             )
-        # else:
-        #     queryset = queryset.annotate(
-        #         is_favorited=Case(
-        #             When(recipe_favorite_related__user=user, then=True),
-        #             default=False,
-        #             output_field=BooleanField()
-        #         ),
-        #         is_in_shopping_cart=Case(
-        #             When(recipe_shoppingcart_related__user=user, then=True),
-        #             default=False,
-        #             output_field=BooleanField()
-        #         )
-        #     )
         return self.annotate_queryset(queryset)
 
     def get_serializer_class(self):
@@ -290,17 +266,7 @@ class RecipeViewSet(ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    # def get_serializer_class(self, action=None):
-    #     print(f'action = {action}')
-    #     print(f'self.action = {self.action}')
-    #     if (action or self.action) in SAFE_METHODS:
-    #         print('action is in SAFE_METHODS')
-    #         return RecipeReadSerializer
-    #     print('action is not in SAFE_METHODS')
-    #     return RecipeWriteSerializer
-    
     def perform_create(self, serializer):
-        print('I/m in def perform_create')
         self.object = serializer.save()
 
     def perform_update(self, serializer):
@@ -308,20 +274,22 @@ class RecipeViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         super().create(request, *args, **kwargs)
-        # serializer_class = self.get_serializer_class(action="retrieve")
-        annotated_recipe = self.annotate_queryset(Recipe.objects.filter(pk=self.object.pk)).first()
-        read_serializer = RecipeReadSerializer(instance=annotated_recipe, context=self.get_serializer_context())
-        print('I/m in def create')
-        # return Response(serializer_class(instance=self.object).data)
+        annotated_recipe = self.annotate_queryset(
+            Recipe.objects.filter(pk=self.object.pk)
+        ).first()
+        read_serializer = RecipeReadSerializer(
+            instance=annotated_recipe, context=self.get_serializer_context()
+        )
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         super().update(request, *args, **kwargs)
-        # serializer_class = self.get_serializer_class(action="retrieve")
-        annotated_recipe = self.annotate_queryset(Recipe.objects.filter(pk=self.object.pk)).first()
-        read_serializer = RecipeReadSerializer(instance=annotated_recipe, context=self.get_serializer_context())
-        # return Response(serializer_class(instance=self.object).data)
-        # return Response(read_serializer.data, status=response.status_code)
+        annotated_recipe = self.annotate_queryset(
+            Recipe.objects.filter(pk=self.object.pk)
+        ).first()
+        read_serializer = RecipeReadSerializer(
+            instance=annotated_recipe, context=self.get_serializer_context()
+        )
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
@@ -359,7 +327,7 @@ class RecipeViewSet(ModelViewSet):
 
     @staticmethod
     def generate_shopping_cart_file(ingredients):
-        """Генерирует содержимое файла для списка покупок."""
+        """Генерация содержимое файла для списка покупок."""
         buffer = io.BytesIO()
         for ingredient in ingredients:
             name_measurement_unit = (
@@ -429,4 +397,3 @@ class RecipeIngredientViewSet(ModelViewSet):
     serializer_class = RecipeIngredientSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
-
