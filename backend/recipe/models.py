@@ -125,15 +125,19 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = "рецепт-ингредиент"
         verbose_name_plural = "Рецепты-Ингредиенты"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["recipe", "ingredients"],
+                name="unique_recipe_ingredient"
+            )
+        ]
 
     def __str__(self):
         return f"{self.ingredients.name} в {self.recipe.name}: {self.amount}"
 
 
-class CommonInfo(models.Model):
-    """
-    Абстрактная модель с полями для Избранного и Списка покупок.
-    """
+class FavoriteShoppingCartFields(models.Model):
+    """Модель с полями для Избранного и Списка покупок."""
 
     recipe = models.ForeignKey(
         Recipe,
@@ -158,21 +162,8 @@ class CommonInfo(models.Model):
         abstract = True
 
 
-class Favorite(CommonInfo):
+class Favorite(FavoriteShoppingCartFields):
     """Модель избранного."""
-
-    # recipe = models.ForeignKey(
-    #     Recipe,
-    #     on_delete=models.CASCADE,
-    #     related_name="favorites",
-    #     verbose_name="Рецепт",
-    # )
-    # user = models.ForeignKey(
-    #     User,
-    #     on_delete=models.CASCADE,
-    #     related_name="favorites",
-    #     verbose_name="Пользователь",
-    # )
 
     class Meta:
         verbose_name = "избранное"
@@ -182,21 +173,8 @@ class Favorite(CommonInfo):
         return f"{self.recipe} в избранном {self.user}"
 
 
-class ShoppingCart(CommonInfo):
+class ShoppingCart(FavoriteShoppingCartFields):
     """Модель списка покупок."""
-
-    # recipe = models.ForeignKey(
-    #     Recipe,
-    #     on_delete=models.CASCADE,
-    #     related_name="shoppingcart",
-    #     verbose_name="Рецепт",
-    # )
-    # user = models.ForeignKey(
-    #     User,
-    #     on_delete=models.CASCADE,
-    #     related_name="shoppingcart",
-    #     verbose_name="Пользователь",
-    # )
 
     class Meta:
         verbose_name = "список покупок"

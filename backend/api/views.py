@@ -290,7 +290,7 @@ class RecipeViewSet(ModelViewSet):
         read_serializer = RecipeReadSerializer(
             instance=annotated_recipe, context=self.get_serializer_context()
         )
-        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
     @action(
         ["post", "delete"],

@@ -216,47 +216,45 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "cooking_time",
         )
 
-    # def validate(self, attrs):
-    #     required_fields = [
-    #         "tags", "ingredients", "image", "name", "text", "cooking_time"
-    #     ]
-    #     if self.context.get("request").method == "PATCH":
-    #         required_fields.remove("image")
-    #     for field in required_fields:
-    #         if field not in attrs or not attrs[field]:
-    #             raise serializers.ValidationError(
-    #                 f'{field} = ["Обязательное поле"]'
-    #             )
-    #     if "ingredients" in attrs:
-    #         ingredients = attrs["ingredients"]
-    #         ingredients_ids = [ingredient['id'] for ingredient in ingredients]
-    #         if len(ingredients_ids) != len(set(ingredients_ids)):
-    #             raise serializers.ValidationError(
-    #                 {"ingredients": [
-    #                     "Ингредиенты не должны повторяться"
-    #                 ]}
-    #             )
-    #         for ingredient in ingredients:
-    #             if not Ingredient.objects.filter(id=ingredient["id"]).exists():
-    #                 raise serializers.ValidationError(
-    #                     {"ingredients": [
-    #                         "Такого ингредиента не существует"
-    #                     ]}
-    #                 )
-    #             if ingredient["amount"] <= 0:
-    #                 raise serializers.ValidationError(
-    #                     {"ingredients": [
-    #                         "Количество не должно быть меньше нуля"
-    #                     ]}
-    #                 )
-    #     if "tags" in attrs:
-    #         tags = attrs["tags"]
-    #         tag_ids = [tag.id for tag in tags]
-    #         if len(tag_ids) != len(set(tag_ids)):
-    #             raise serializers.ValidationError(
-    #                 {"tags": ["Тэги не должны повторяться"]}
-    #             )
-    #     return attrs
+    def validate(self, attrs):
+        required_fields = [
+            "tags", "ingredients"
+        ]
+        for field in required_fields:
+            if field not in attrs or not attrs[field]:
+                raise serializers.ValidationError(
+                    f'{field} = ["Обязательное поле"]'
+                )
+        if "ingredients" in attrs:
+            ingredients = attrs["ingredients"]
+            ingredients_ids = [ingredient['id'] for ingredient in ingredients]
+            if len(ingredients_ids) != len(set(ingredients_ids)):
+                raise serializers.ValidationError(
+                    {"ingredients": [
+                        "Ингредиенты не должны повторяться"
+                    ]}
+                )
+            for ingredient in ingredients:
+                if not Ingredient.objects.filter(id=ingredient["id"]).exists():
+                    raise serializers.ValidationError(
+                        {"ingredients": [
+                            "Такого ингредиента не существует"
+                        ]}
+                    )
+                if ingredient["amount"] <= 0:
+                    raise serializers.ValidationError(
+                        {"ingredients": [
+                            "Количество не должно быть меньше нуля"
+                        ]}
+                    )
+        if "tags" in attrs:
+            tags = attrs["tags"]
+            tag_ids = [tag.id for tag in tags]
+            if len(tag_ids) != len(set(tag_ids)):
+                raise serializers.ValidationError(
+                    {"tags": ["Тэги не должны повторяться"]}
+                )
+        return attrs
 
 
     def _update_tags_and_ingredients(self, recipe, tags, ingredients):
@@ -277,10 +275,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         user = self.context.get("request").user
         tags = validated_data.pop("tags")
         ingredients = validated_data.pop("ingredients")
-        print(f'ingredients = {ingredients}')
         recipe = Recipe.objects.create(author=user, **validated_data)
         self._update_tags_and_ingredients(recipe, tags, ingredients)
-        print('success')
         return recipe
 
     def update(self, instance, validated_data):
