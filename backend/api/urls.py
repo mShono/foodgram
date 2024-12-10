@@ -3,8 +3,7 @@ from django.shortcuts import redirect
 from django.urls import include, path
 from rest_framework import routers
 
-from .views import (UserViewSet, IngredientViewSet, RecipeViewSet,
-                    TagViewSet)
+from .views import IngredientViewSet, RecipeViewSet, TagViewSet, UserViewSet
 
 
 def redirect_to_recipe(request, short_id):

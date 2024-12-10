@@ -2,11 +2,13 @@ import base64
 import uuid
 
 from django.core.files.base import ContentFile
-from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                           ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
-from users.models import User, Subscription
+
+from backend.constants import PAGE_SIZE
+from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                           ShoppingCart, Tag)
+from users.models import Subscription, User
 
 
 class Base64ImageField(serializers.ImageField):
@@ -65,7 +67,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         user = instance.subscribed_to
-        recipes_limit = self.context.get("recipes_limit", 6)
+        recipes_limit = self.context.get("recipes_limit", PAGE_SIZE)
         recipes = user.recipes.all()
         if recipes_limit:
             recipes = recipes[:recipes_limit]
@@ -255,7 +257,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                     {"tags": ["Тэги не должны повторяться"]}
                 )
         return attrs
-
 
     def _update_tags_and_ingredients(self, recipe, tags, ingredients):
         """Обновление тегов и ингредиентов для рецепта."""
