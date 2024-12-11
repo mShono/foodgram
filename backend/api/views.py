@@ -2,7 +2,7 @@ import io
 
 import short_url
 from django.db.models import BooleanField, Case, Count, Sum, Value, When
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
@@ -232,7 +232,7 @@ class RecipeViewSet(ModelViewSet):
     def get_queryset(self):
         """Аннотирование полей is_favorited и is_in_shopping_cart."""
         user = self.request.user
-        queryset = super().get_queryset()
+        queryset = self.queryset
         if not user.is_authenticated:
             return queryset.annotate(
                 is_favorited=Value(False, output_field=BooleanField()),
