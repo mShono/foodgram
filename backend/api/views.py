@@ -112,7 +112,8 @@ class UserViewSet(djoser_views.UserViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             serializer = SubscriptionSerializer(
-                data={"subscriber": user.id, "subscribed_to": followee.id}
+                data={"subscribed_to": followee.id},
+                context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
             subscription = serializer.save()
