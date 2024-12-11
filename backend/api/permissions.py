@@ -3,10 +3,7 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsAuthenticatedAuthorOrReadOnly(BasePermission):
-    """
-    Разрешение на редактирование информации только автором
-    или аутентифицированным пользователем или чтение
-    """
+    """Доступ только автору или зарегистрированному пользователю или чтение"""
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:

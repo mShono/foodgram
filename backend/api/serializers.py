@@ -288,11 +288,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        user = self.context.get("request").user
-        if user != instance.author:
-            raise PermissionDenied(
-                "У вас недостаточно прав для выполнения данного действия."
-            )
         tags = validated_data.pop("tags")
         ingredients = validated_data.pop("ingredients")
         self._update_tags_and_ingredients(instance, tags, ingredients)
