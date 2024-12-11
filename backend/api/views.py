@@ -236,9 +236,15 @@ class RecipeViewSet(ModelViewSet):
     filterset_class = RecipeFilter
     pagination_class = PageAndLimitPagination
 
-    def annotate_queryset(self, queryset):
-        """Общий метод для аннотирования is_favorited и is_in_shopping_cart."""
+    def get_queryset(self):
+        """Аннотирование полей is_favorited и is_in_shopping_cart."""
         user = self.request.user
+        queryset = super().get_queryset()
+        if not user.is_authenticated:
+            return queryset.annotate(
+                is_favorited=Value(False, output_field=BooleanField()),
+                is_in_shopping_cart=Value(False, output_field=BooleanField())
+            )
         return queryset.annotate(
             is_favorited=Case(
                 When(recipe_favorite_related__user=user, then=True),
@@ -252,47 +258,10 @@ class RecipeViewSet(ModelViewSet):
             )
         )
 
-    def get_queryset(self):
-        """Аннотирование полей is_favorited и is_in_shopping_cart."""
-        user = self.request.user
-        queryset = super().get_queryset()
-        if not user.is_authenticated:
-            return queryset.annotate(
-                is_favorited=Value(False, output_field=BooleanField()),
-                is_in_shopping_cart=Value(False, output_field=BooleanField())
-            )
-        return self.annotate_queryset(queryset)
-
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
         return RecipeWriteSerializer
-
-    def perform_create(self, serializer):
-        self.object = serializer.save()
-
-    def perform_update(self, serializer):
-        self.object = serializer.save()
-
-    def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        annotated_recipe = self.annotate_queryset(
-            Recipe.objects.filter(pk=self.object.pk)
-        ).first()
-        read_serializer = RecipeReadSerializer(
-            instance=annotated_recipe, context=self.get_serializer_context()
-        )
-        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
-
-    def update(self, request, *args, **kwargs):
-        super().update(request, *args, **kwargs)
-        annotated_recipe = self.annotate_queryset(
-            Recipe.objects.filter(pk=self.object.pk)
-        ).first()
-        read_serializer = RecipeReadSerializer(
-            instance=annotated_recipe, context=self.get_serializer_context()
-        )
-        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
     @action(
         ["post", "delete"],

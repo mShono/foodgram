@@ -130,11 +130,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "email",
             "id",
             "username",
             "first_name",
             "last_name",
+            "email",
             "is_subscribed",
             "avatar",
         )
@@ -206,6 +206,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         many=True, write_only=True, required=True, allow_empty=False
     )
     author = UserSerializer(read_only=True)
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField()
 
     class Meta:
@@ -215,6 +217,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             "tags",
             "author",
             "ingredients",
+            "is_favorited",
+            "is_in_shopping_cart",
             "name",
             "image",
             "text",
@@ -293,6 +297,49 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop("ingredients")
         self._update_tags_and_ingredients(instance, tags, ingredients)
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        tags = instance.tags.all()
+        tags_data = [
+            {"id": tag.id, "name": tag.name, "slug": tag.slug}
+            for tag in tags
+        ]
+        ingredients = RecipeIngredient.objects.filter(recipe=instance)
+        ingredients_data = [
+            {
+                **IngredientSerializer(ingredient.ingredients).data,
+                "amount": ingredient.amount
+            }
+            for ingredient in ingredients
+        ]
+        data = {
+            "id": data.get("id"),
+            "tags": tags_data,
+            "author": data.get("author"),
+            "ingredients": ingredients_data,
+            "is_favorited": data.get("is_favorited"),
+            "is_in_shopping_cart": data.get("is_in_shopping_cart"),
+            "name": data.get("name"),
+            "image": data.get("image"),
+            "text": data.get("text"),
+            "cooking_time": int(data.get("cooking_time"))
+        }
+        return data
+
+    def get_is_favorited(self, obj):
+        user = self.context.get("request").user
+        if user.is_authenticated:
+            return Favorite.objects.filter(user=user, recipe=obj).exists()
+        return False
+
+ 
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context.get("request").user
+        if user.is_authenticated:
+            return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
+        return False
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
