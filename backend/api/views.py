@@ -90,14 +90,8 @@ class UserViewSet(djoser_views.UserViewSet):
     )
     def manage_subscriptions(self, request, id=None):
         user = request.user
+        followee = get_object_or_404(User, id=id)
         if request.method == "POST":
-            try:
-                followee = get_object_or_404(User, id=id)
-            except Http404:
-                return Response(
-                    {"detail": "Страница не найдена."},
-                    status=status.HTTP_404_NOT_FOUND
-                )
             if user == followee:
                 return Response(
                     {"detail": "Вы не можете подписаться на самого себя."},
@@ -112,8 +106,7 @@ class UserViewSet(djoser_views.UserViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             serializer = SubscriptionSerializer(
-                data={"subscribed_to": followee.id},
-                context={"request": request}
+                data={"subscriber": user.id, "subscribed_to": followee.id}
             )
             serializer.is_valid(raise_exception=True)
             subscription = serializer.save()
@@ -133,7 +126,7 @@ class UserViewSet(djoser_views.UserViewSet):
         if request.method == "DELETE":
             deleted_count, _ = Subscription.objects.filter(
                 subscriber=user,
-                subscribed_to=get_object_or_404(User, id=id)
+                subscribed_to=followee
             ).delete()
             if deleted_count == 0:
                 return Response(

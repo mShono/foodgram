@@ -77,11 +77,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             subscribed_to=user
         ).exists()
         return {
-            "email": user.email,
             "id": user.id,
             "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
+            "email": user.email,
             "is_subscribed": subscription,
             "recipes": recipes_data,
             "recipes_count": getattr(instance, "recipes_count", 0),
@@ -324,17 +324,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         user = self.context.get("request").user
-        if user.is_authenticated:
-            return Favorite.objects.filter(user=user, recipe=obj).exists()
-        return False
-
- 
+        return Favorite.objects.filter(user=user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context.get("request").user
-        if user.is_authenticated:
-            return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
-        return False
+        return ShoppingCart.objects.filter(user=user, recipe=obj).exists()
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
