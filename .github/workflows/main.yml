@@ -30,7 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: 
       - linters
-      - tests
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
