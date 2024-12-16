@@ -1,10 +1,10 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from users.models import User
 
 from backend.constants import (MAX_LEN_INGREDIENT_NAME,
                                MAX_LEN_MEASURMENT_UNIT, MAX_LEN_RECIPE_NAME,
                                MAX_LEN_TAG_NAME)
-from users.models import User
 
 
 class Tag(models.Model):

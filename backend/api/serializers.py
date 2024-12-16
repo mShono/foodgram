@@ -1,12 +1,13 @@
 import base64
 import uuid
 
-from backend.constants import PAGE_SIZE
 from django.core.files.base import ContentFile
 from recipe.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                            ShoppingCart, Tag)
 from rest_framework import serializers
 from users.models import Subscription, User
+
+from backend.constants import PAGE_SIZE
 
 
 class Base64ImageField(serializers.ImageField):
