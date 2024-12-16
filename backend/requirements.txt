@@ -1,0 +1,14 @@
+requests==2.26.0
+Django==3.2
+djangorestframework==3.12.4
+Pillow==9.3.0
+psycopg2-binary==2.9.3
+PyJWT==2.1.0
+pytest==6.2.4
+pytest-django==4.4.0
+pytest-pythonpath==0.7.3
+python-dotenv==1.0.1
+django-filter==23.1
+djoser==2.1.0
+short_url==1.2.2
+flake8-docstrings==1.6.0
