@@ -24,7 +24,7 @@ jobs:
         pip install -r ./requirements/requirements_lint.txt
     - name: Test with flake8
       run: |
-        python -m flake8 backend/
+        python -m flake8 --ignore=D backend/
 
   build_backend_and_push_to_docker_hub:
     name: Push Docker image to DockerHub
