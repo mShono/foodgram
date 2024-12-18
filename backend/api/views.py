@@ -236,7 +236,7 @@ class RecipeViewSet(ModelViewSet):
             return queryset.annotate(
                 is_favorited=Value(False, output_field=BooleanField()),
                 is_in_shopping_cart=Value(False, output_field=BooleanField())
-            )
+            ).distinct()
         return queryset.annotate(
             is_favorited=Case(
                 When(recipe_favorite_related__user=user, then=True),
@@ -248,7 +248,7 @@ class RecipeViewSet(ModelViewSet):
                 default=False,
                 output_field=BooleanField()
             )
-        )
+        ).distinct()
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
