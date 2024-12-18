@@ -221,7 +221,7 @@ class RecipeViewSet(ModelViewSet):
         'author'
     ).prefetch_related(
         'tags', 'ingredients'
-    )
+    ).distinct()
     serializer_class = (RecipeReadSerializer, RecipeWriteSerializer,)
     permission_classes = [IsAuthenticatedAuthorOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
