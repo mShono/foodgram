@@ -1,7 +1,9 @@
 import io
 
 import short_url
-from django.db.models import BooleanField, Case, Count, Sum, Value, When
+from django.db.models import (BooleanField, Count, Exists, OuterRef, Sum,
+                              Value)
+# Case, When
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -236,18 +238,40 @@ class RecipeViewSet(ModelViewSet):
                 is_favorited=Value(False, output_field=BooleanField()),
                 is_in_shopping_cart=Value(False, output_field=BooleanField())
             )
-        return queryset.annotate(
-            is_favorited=Case(
-                When(recipe_favorite_related__user=user, then=True),
-                default=False,
-                output_field=BooleanField()
-            ),
-            is_in_shopping_cart=Case(
-                When(recipe_shoppingcart_related__user=user, then=True),
-                default=False,
-                output_field=BooleanField()
-            )
+        recipe_ids_subquery = Recipe.objects.values_list('id', flat=True)
+        favorites_subquery = Favorite.objects.filter(
+            user=user,
+            recipe_id__in=recipe_ids_subquery
         )
+        shopping_cart_subquery = ShoppingCart.objects.filter(
+            user=user,
+            recipe_id__in=recipe_ids_subquery
+        )
+
+        return queryset.annotate(
+            is_favorited=Exists(
+                favorites_subquery.filter(
+                    recipe_id=OuterRef('id')
+                )
+            ),
+            is_in_shopping_cart=Exists(
+                shopping_cart_subquery.filter(
+                    recipe_id=OuterRef('id')
+                )
+            )
+        ).distinct()
+        # return queryset.annotate(
+        #     is_favorited=Case(
+        #         When(recipe_favorite_related__user=user, then=True),
+        #         default=False,
+        #         output_field=BooleanField()
+        #     ),
+        #     is_in_shopping_cart=Case(
+        #         When(recipe_shoppingcart_related__user=user, then=True),
+        #         default=False,
+        #         output_field=BooleanField()
+        #     )
+        # )
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
