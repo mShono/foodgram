@@ -1,8 +1,7 @@
 import io
 
 import short_url
-from django.db.models import (BooleanField, Case, Count, QuerySet, Sum, Value,
-                              When)
+from django.db.models import BooleanField, Case, Count, Sum, Value, When
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -228,7 +227,7 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = PageAndLimitPagination
- 
+
     def get_queryset(self):
         """Аннотирование полей is_favorited и is_in_shopping_cart."""
         user = self.request.user
@@ -255,7 +254,6 @@ class RecipeViewSet(ModelViewSet):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
         return RecipeWriteSerializer
-
 
     @action(
         ["post", "delete"],
