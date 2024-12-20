@@ -26,7 +26,7 @@ from .serializers import (AvatarSerializer, FavoriteSerializer,
                           TagSerializer, UserSerializer)
 
 
-class UserViewSet(djoser_views.UserViewSet): # Case, When
+class UserViewSet(djoser_views.UserViewSet):  # Case, When
     """Вьюсет для модели Пользователя."""
 
     queryset = User.objects.all()
@@ -50,7 +50,7 @@ class UserViewSet(djoser_views.UserViewSet): # Case, When
         ["put", "delete"],
         detail=False,
         url_path="me/avatar",
-        url_name="upload-avatar" 
+        url_name="upload-avatar"
     )
     def manage_avatar(self, request):
         user = request.user
