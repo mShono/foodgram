@@ -1,9 +1,7 @@
 import io
 
 import short_url
-from django.db.models import (BooleanField, Count, Exists, OuterRef, Sum,
-                              Value)
-# Case, When
+from django.db.models import BooleanField, Count, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -28,7 +26,7 @@ from .serializers import (AvatarSerializer, FavoriteSerializer,
                           TagSerializer, UserSerializer)
 
 
-class UserViewSet(djoser_views.UserViewSet):
+class UserViewSet(djoser_views.UserViewSet): # Case, When
     """Вьюсет для модели Пользователя."""
 
     queryset = User.objects.all()
@@ -52,7 +50,7 @@ class UserViewSet(djoser_views.UserViewSet):
         ["put", "delete"],
         detail=False,
         url_path="me/avatar",
-        url_name="upload-avatar"
+        url_name="upload-avatar" 
     )
     def manage_avatar(self, request):
         user = request.user
