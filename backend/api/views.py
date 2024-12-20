@@ -1,7 +1,7 @@
 import io
 
 import short_url
-from django.db.models import BooleanField, Case, Count, Sum, Value, When
+from django.db.models import BooleanField, Case, Count, Sum, Value, When, QuerySet
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -215,19 +215,18 @@ def manage_recipe_action(
 
 
 class RecipeViewSet(ModelViewSet):
-    """Вьюсет для модели Ingredient."""
+    """Вьюсет для модели Recipe."""
 
     queryset = Recipe.objects.select_related(
         'author'
     ).prefetch_related(
-        'tags', 'ingredients'
-    ).distinct()
+        'tags', 'ingredients')
     serializer_class = (RecipeReadSerializer, RecipeWriteSerializer,)
     permission_classes = [IsAuthenticatedAuthorOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = PageAndLimitPagination
-
+ 
     def get_queryset(self):
         """Аннотирование полей is_favorited и is_in_shopping_cart."""
         user = self.request.user
@@ -236,7 +235,7 @@ class RecipeViewSet(ModelViewSet):
             return queryset.annotate(
                 is_favorited=Value(False, output_field=BooleanField()),
                 is_in_shopping_cart=Value(False, output_field=BooleanField())
-            ).distinct()
+            )
         return queryset.annotate(
             is_favorited=Case(
                 When(recipe_favorite_related__user=user, then=True),
@@ -248,12 +247,13 @@ class RecipeViewSet(ModelViewSet):
                 default=False,
                 output_field=BooleanField()
             )
-        ).distinct()
+        )
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
         return RecipeWriteSerializer
+
 
     @action(
         ["post", "delete"],
