@@ -26,7 +26,7 @@ from .serializers import (AvatarSerializer, FavoriteSerializer,
                           TagSerializer, UserSerializer)
 
 
-class UserViewSet(djoser_views.UserViewSet):  # Case, When
+class UserViewSet(djoser_views.UserViewSet):
     """Вьюсет для модели Пользователя."""
 
     queryset = User.objects.all()
@@ -258,18 +258,6 @@ class RecipeViewSet(ModelViewSet):
                 )
             )
         ).distinct()
-        # return queryset.annotate(
-        #     is_favorited=Case(
-        #         When(recipe_favorite_related__user=user, then=True),
-        #         default=False,
-        #         output_field=BooleanField()
-        #     ),
-        #     is_in_shopping_cart=Case(
-        #         When(recipe_shoppingcart_related__user=user, then=True),
-        #         default=False,
-        #         output_field=BooleanField()
-        #     )
-        # )
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
