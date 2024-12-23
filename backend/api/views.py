@@ -91,19 +91,6 @@ class UserViewSet(djoser_views.UserViewSet):
         user = request.user
         followee = get_object_or_404(User, id=id)
         if request.method == "POST":
-            if user == followee:
-                return Response(
-                    {"detail": "Вы не можете подписаться на самого себя."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            elif Subscription.objects.filter(
-                subscriber=user,
-                subscribed_to=followee
-            ).exists():
-                return Response(
-                    {"detail": "Вы уже подписаны на этого автора."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
             serializer = SubscriptionSerializer(
                 data={"subscriber": user.id, "subscribed_to": followee.id}
             )

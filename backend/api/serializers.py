@@ -64,6 +64,22 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "subscribed_to",
         )
 
+    def validate(self, attrs):
+        user = attrs.get("subscriber")
+        followee = attrs.get("subscribed_to")
+        if user == followee:
+            raise serializers.ValidationError(
+                "Вы не можете подписаться на самого себя."
+            )
+        if Subscription.objects.filter(
+                subscriber=user,
+                subscribed_to=followee
+            ).exists():
+            raise serializers.ValidationError(
+                "Вы уже подписаны на этого автора."
+            )
+        return attrs
+
     def to_representation(self, instance):
         user = instance.subscribed_to
         recipes_limit = self.context.get("recipes_limit", PAGE_SIZE)
