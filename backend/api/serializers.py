@@ -74,7 +74,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         if Subscription.objects.filter(
                 subscriber=user,
                 subscribed_to=followee
-            ).exists():
+        ).exists():
             raise serializers.ValidationError(
                 "Вы уже подписаны на этого автора."
             )
