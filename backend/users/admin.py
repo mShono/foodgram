@@ -42,6 +42,11 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("pk", "subscriber", "subscribed_to")
-    list_display_links = ("subscriber__username",)
-    search_fields = ("subscriber",)
+    list_display_links = ("subscriber",)
+    search_fields = ("subscriber__username",)
+    list_filter = ("subscriber__username", "subscribed_to__username")
     empty_value_display = "-пусто-"
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related("subscriber", "subscribed_to")
