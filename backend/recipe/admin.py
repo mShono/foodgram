@@ -7,6 +7,7 @@ from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ("pk", "name", "slug")
+    list_display_links = ("name",)
     search_fields = ("name",)
     empty_value_display = "-пусто-"
 
@@ -21,14 +22,23 @@ class IngredientAdmin(admin.ModelAdmin):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ("pk", "author", "name")
-    search_fields = ("name", "author")
-    list_filter = ("tags",)
+    list_display_links = ("author",)
+    list_filter = ("name", "author", "tags",)
     empty_value_display = "-пусто-"
     readonly_fields = ("favorites_count",)
 
+    def get_queryset(self, request):
+        """Оптимизация запроса для списка рецептов."""
+        queryset = super().get_queryset(request)
+        return queryset.select_related(
+            "author"
+        ).prefetch_related(
+            "tags", "ingredients"
+        )
+
     @admin.display(description="Количество в избранном")
     def favorites_count(self, obj):
-        """Returnes the ammount of adding the recipe to the favorites"""
+        """Возвращает количество рецептов, добавленных в избранное"""
         return obj.favorites.count()
 
 
@@ -37,6 +47,7 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
     list_display = (
         "pk", "recipe", "ingredients", "amount",
     )
+    list_display_links = ("recipe",)
     search_fields = ("recipie",)
     empty_value_display = "-пусто-"
 
@@ -44,12 +55,24 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ("pk", "recipe", "user")
+    list_display_links = ("recipe",)
     search_fields = ("recipe",)
     empty_value_display = "-пусто-"
+
+    def get_queryset(self, request):
+        """Оптимизация запроса для избранного."""
+        queryset = super().get_queryset(request)
+        return queryset.select_related("user")
 
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ("pk", "recipe", "user")
+    list_display_links = ("recipe",)
     search_fields = ("recipe",)
     empty_value_display = "-пусто-"
+
+    def get_queryset(self, request):
+        """Оптимизация запроса для корзины покупок."""
+        queryset = super().get_queryset(request)
+        return queryset.select_related("user")
