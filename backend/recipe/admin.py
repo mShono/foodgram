@@ -21,8 +21,9 @@ class IngredientAdmin(admin.ModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ("pk", "author", "name")
-    list_display_links = ("author",)
+    list_display = ("pk", "name", "author")
+    list_display_links = ("name",)
+    search_fields = ("name",)
     list_filter = ("name", "author", "tags",)
     empty_value_display = "-пусто-"
     readonly_fields = ("favorites_count",)
@@ -48,7 +49,7 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
         "pk", "recipe", "ingredients", "amount",
     )
     list_display_links = ("recipe",)
-    search_fields = ("recipe",)
+    search_fields = ("recipe__name", "ingredients__name")
     empty_value_display = "-пусто-"
 
 

@@ -42,6 +42,6 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("pk", "subscriber", "subscribed_to")
-    list_display_links = ("subscriber",)
+    list_display_links = ("subscriber__username",)
     search_fields = ("subscriber",)
     empty_value_display = "-пусто-"
