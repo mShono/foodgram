@@ -48,7 +48,7 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
         "pk", "recipe", "ingredients", "amount",
     )
     list_display_links = ("recipe",)
-    search_fields = ("recipie",)
+    search_fields = ("recipe",)
     empty_value_display = "-пусто-"
 
 
@@ -56,23 +56,23 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ("pk", "recipe", "user")
     list_display_links = ("recipe",)
-    search_fields = ("recipe",)
+    search_fields = ("recipe__name", "user__username", "user__email")
     empty_value_display = "-пусто-"
 
     def get_queryset(self, request):
         """Оптимизация запроса для избранного."""
         queryset = super().get_queryset(request)
-        return queryset.select_related("user")
+        return queryset.select_related("user", "recipe")
 
 
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ("pk", "recipe", "user")
     list_display_links = ("recipe",)
-    search_fields = ("recipe",)
+    search_fields = ("recipe__name", "user__username", "user__email")
     empty_value_display = "-пусто-"
 
     def get_queryset(self, request):
         """Оптимизация запроса для корзины покупок."""
         queryset = super().get_queryset(request)
-        return queryset.select_related("user")
+        return queryset.select_related("user", "recipe")
